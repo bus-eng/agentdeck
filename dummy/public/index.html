@@ -1433,6 +1433,561 @@
       border-radius: var(--radius-full);
     }
 
+    /* ── File Explorer ───────────────────────────────────────────────────── */
+
+    /* View swap: form view vs explorer view inside the modal */
+    #explorer-view {
+      display: none;
+      flex-direction: column;
+      height: 420px;
+      max-height: 60dvh;
+      overflow: hidden;
+      margin: calc(-1 * var(--s6));    /* bleed to modal edges */
+      border-radius: var(--radius-lg);
+    }
+
+    #explorer-view.visible {
+      display: flex;
+    }
+
+    /* Explorer header */
+    #explorer-header {
+      flex-shrink: 0;
+      background: var(--bg-elevated);
+      border-bottom: 1px solid var(--border);
+      padding: var(--s3) var(--s4) 0;
+    }
+
+    #explorer-header-top {
+      display: flex;
+      align-items: center;
+      gap: var(--s2);
+      margin-bottom: var(--s3);
+    }
+
+    #explorer-back-btn {
+      display: flex;
+      align-items: center;
+      gap: var(--s1);
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 5px var(--s2);
+      cursor: pointer;
+      flex-shrink: 0;
+      min-height: 30px;
+      transition: background 120ms var(--ease-out), color 120ms var(--ease-out);
+    }
+
+    #explorer-back-btn svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+
+    #explorer-back-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    /* Breadcrumb */
+    #explorer-breadcrumb {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+
+    #explorer-breadcrumb::-webkit-scrollbar { display: none; }
+
+    .breadcrumb-seg {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding: 3px 4px;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      white-space: nowrap;
+      transition: color 100ms, background 100ms;
+    }
+
+    .breadcrumb-seg:hover {
+      color: var(--violet);
+      background: var(--violet-glow);
+    }
+
+    .breadcrumb-seg.active {
+      color: var(--text-primary);
+      font-weight: 500;
+      cursor: default;
+    }
+
+    .breadcrumb-sep {
+      color: var(--text-tertiary);
+      flex-shrink: 0;
+      width: 14px;
+      height: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .breadcrumb-sep svg {
+      width: 12px;
+      height: 12px;
+    }
+
+    /* Shortcut chips row */
+    #explorer-shortcuts {
+      display: flex;
+      gap: var(--s2);
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding: var(--s2) 0 var(--s3);
+    }
+
+    #explorer-shortcuts::-webkit-scrollbar { display: none; }
+
+    .shortcut-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-full);
+      padding: 5px 10px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 120ms var(--ease-out), color 120ms var(--ease-out), border-color 120ms;
+      min-height: 28px;
+    }
+
+    .shortcut-chip svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+
+    .shortcut-chip:hover {
+      background: var(--violet-glow);
+      border-color: var(--border);
+      color: var(--text-primary);
+    }
+
+    .shortcut-chip:active {
+      background: var(--violet-dim);
+      color: var(--violet);
+    }
+
+    /* Explorer live-region (a11y) */
+    #explorer-live {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      white-space: nowrap;
+    }
+
+    /* Explorer body */
+    #explorer-body {
+      flex: 1;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    #explorer-body::-webkit-scrollbar { width: 3px; }
+    #explorer-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+    /* Truncated banner */
+    #explorer-truncated-banner {
+      display: none;
+      padding: var(--s2) var(--s4);
+      background: rgba(251, 191, 36, 0.10);
+      border-bottom: 1px solid rgba(251, 191, 36, 0.20);
+      font-size: 12px;
+      color: #fbbf24;
+      text-align: center;
+    }
+
+    #explorer-truncated-banner.visible { display: block; }
+
+    /* Error state */
+    #explorer-error {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--s3);
+      padding: var(--s8) var(--s6);
+      text-align: center;
+    }
+
+    #explorer-error.visible { display: flex; }
+
+    #explorer-error-msg {
+      font-size: 13px;
+      color: var(--rose);
+      background: var(--rose-dim);
+      border: 1px solid rgba(251,113,133,0.2);
+      border-radius: var(--s2);
+      padding: var(--s3) var(--s4);
+      width: 100%;
+    }
+
+    #explorer-error-home {
+      font-size: 13px;
+      color: var(--text-secondary);
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--s2);
+      padding: 8px var(--s4);
+      cursor: pointer;
+      min-height: 36px;
+      transition: background 120ms;
+    }
+
+    #explorer-error-home:hover { background: var(--bg-hover); }
+
+    /* Empty dir state */
+    #explorer-empty-dir {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--s3);
+      padding: var(--s8) var(--s6);
+      color: var(--text-tertiary);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    #explorer-empty-dir.visible { display: flex; }
+
+    #explorer-empty-dir img {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--s2);
+      opacity: 0.4;
+    }
+
+    /* Entry list */
+    #explorer-entries {
+      list-style: none;
+    }
+
+    .explorer-entry {
+      display: flex;
+      align-items: center;
+      gap: var(--s3);
+      padding: 0 var(--s4);
+      height: 48px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border-subtle);
+      transition: background 100ms var(--ease-out);
+      position: relative;
+      /* slide-in animation */
+      animation: explorer-entry-in 120ms var(--ease-out) both;
+    }
+
+    @keyframes explorer-entry-in {
+      from { opacity: 0; transform: translateX(-6px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    .explorer-entry:last-child {
+      border-bottom: none;
+    }
+
+    .explorer-entry.dir:hover {
+      background: rgba(167, 139, 250, 0.08);
+    }
+
+    .explorer-entry.dir:active {
+      background: rgba(167, 139, 250, 0.14);
+    }
+
+    .explorer-entry.file {
+      opacity: .55;
+      cursor: default;
+    }
+
+    .explorer-entry-icon {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .explorer-entry-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .explorer-entry-name {
+      flex: 1;
+      min-width: 0;
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      color: var(--text-primary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .explorer-entry-meta {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 1px;
+    }
+
+    .explorer-entry-size {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text-tertiary);
+    }
+
+    .explorer-entry-mtime {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      opacity: .7;
+    }
+
+    /* Symlink color */
+    .explorer-entry.symlink .explorer-entry-icon {
+      color: #fbbf24;
+    }
+
+    /* Skeleton loading */
+    #explorer-skeleton {
+      display: none;
+      padding: var(--s2) 0;
+    }
+
+    #explorer-skeleton.visible { display: block; }
+
+    .skeleton-row {
+      display: flex;
+      align-items: center;
+      gap: var(--s3);
+      padding: 0 var(--s4);
+      height: 48px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .skeleton-row:last-child { border-bottom: none; }
+
+    .skel {
+      background: var(--bg-elevated);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .skel::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.04) 50%, transparent 100%);
+      animation: shimmer 1.4s ease-in-out infinite;
+    }
+
+    @keyframes shimmer {
+      from { transform: translateX(-100%); }
+      to   { transform: translateX(100%); }
+    }
+
+    .skel-icon  { width: 20px; height: 20px; flex-shrink: 0; border-radius: var(--radius-sm); }
+    .skel-name  { height: 13px; flex: 1; max-width: 60%; }
+    .skel-meta  { height: 11px; width: 48px; flex-shrink: 0; }
+
+    /* Explorer footer */
+    #explorer-footer {
+      flex-shrink: 0;
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border);
+      padding: var(--s3) var(--s4);
+      padding-bottom: calc(var(--s3) + env(safe-area-inset-bottom));
+    }
+
+    #explorer-footer-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--s2);
+      gap: var(--s3);
+    }
+
+    #explorer-current-path {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-tertiary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+    }
+
+    #explorer-toggle-hidden {
+      display: flex;
+      align-items: center;
+      gap: var(--s2);
+      flex-shrink: 0;
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--text-secondary);
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    #explorer-toggle-hidden input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 32px;
+      height: 18px;
+      background: var(--bg-hover);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      position: relative;
+      cursor: pointer;
+      transition: background 150ms, border-color 150ms;
+      flex-shrink: 0;
+    }
+
+    #explorer-toggle-hidden input[type="checkbox"]::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--text-tertiary);
+      transition: transform 150ms var(--ease-out), background 150ms;
+    }
+
+    #explorer-toggle-hidden input[type="checkbox"]:checked {
+      background: var(--violet-dim);
+      border-color: var(--violet-dark);
+    }
+
+    #explorer-toggle-hidden input[type="checkbox"]:checked::after {
+      transform: translateX(14px);
+      background: var(--violet);
+    }
+
+    #explorer-select-btn {
+      width: 100%;
+      background: var(--grad-brand);
+      color: var(--text-on-violet);
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      border-radius: var(--s2);
+      padding: 11px var(--s5);
+      cursor: pointer;
+      min-height: 44px;
+      transition: opacity 150ms var(--ease-out), transform 150ms var(--ease-out);
+    }
+
+    #explorer-select-btn:hover { opacity: 0.92; }
+    #explorer-select-btn:active { transform: scale(0.98); }
+
+    /* Path picker in form (replaces text input) */
+    #modal-path-picker {
+      display: flex;
+      flex-direction: column;
+      gap: var(--s2);
+    }
+
+    #modal-path-display {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+
+    #modal-path-display.selected {
+      color: var(--teal);
+    }
+
+    #modal-path-display strong {
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    #modal-choose-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--s2);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--s2);
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 500;
+      padding: 10px var(--s4);
+      cursor: pointer;
+      min-height: 44px;
+      width: 100%;
+      transition: background 120ms var(--ease-out), border-color 120ms;
+    }
+
+    #modal-choose-btn svg {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      color: var(--teal);
+    }
+
+    #modal-choose-btn:hover {
+      background: var(--bg-hover);
+      border-color: rgba(167, 139, 250, 0.25);
+    }
+
+    #modal-path-change-btn {
+      background: transparent;
+      border: none;
+      color: var(--violet);
+      font-size: 12px;
+      cursor: pointer;
+      padding: 0;
+      margin-left: var(--s2);
+      text-decoration: underline;
+      text-decoration-color: transparent;
+      transition: text-decoration-color 120ms;
+    }
+
+    #modal-path-change-btn:hover {
+      text-decoration-color: var(--violet);
+    }
+
+    /* Transition: fade + slide when entering explorer */
+    #explorer-entries.navigating {
+      animation: explorer-nav-in 120ms var(--ease-out) both;
+    }
+
+    @keyframes explorer-nav-in {
+      from { opacity: 0; transform: translateX(8px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
     /* ── Reduced motion ──────────────────────────────────────────────────── */
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
@@ -1732,46 +2287,164 @@
   aria-labelledby="modal-heading"
 >
   <div id="project-modal">
-    <h3 id="modal-heading">Nuevo proyecto</h3>
 
-    <div class="modal-field">
-      <label class="modal-label" for="modal-name">Nombre</label>
-      <input
-        id="modal-name"
-        class="modal-input"
-        type="text"
-        autocapitalize="none"
-        autocorrect="off"
-        spellcheck="false"
-        autocomplete="off"
-        placeholder="mi-proyecto"
-      />
-      <div class="modal-error" id="modal-name-error" role="alert" aria-live="polite"></div>
+    <!-- ── Form view ──────────────────────────────────────────── -->
+    <div id="modal-form-view">
+      <h3 id="modal-heading">Nuevo proyecto</h3>
+
+      <div class="modal-field">
+        <label class="modal-label" for="modal-name">Nombre</label>
+        <input
+          id="modal-name"
+          class="modal-input"
+          type="text"
+          autocapitalize="none"
+          autocorrect="off"
+          spellcheck="false"
+          autocomplete="off"
+          placeholder="mi-proyecto"
+        />
+        <div class="modal-error" id="modal-name-error" role="alert" aria-live="polite"></div>
+      </div>
+
+      <div class="modal-field">
+        <label class="modal-label">Carpeta del proyecto</label>
+        <div id="modal-path-picker">
+          <button id="modal-choose-btn" type="button" aria-label="Abrir explorador de carpetas">
+            <!-- Lucide: folder-open -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M6 14l1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/>
+            </svg>
+            Elegir carpeta…
+          </button>
+          <div id="modal-path-display" aria-live="polite">Ninguna carpeta seleccionada</div>
+        </div>
+        <div class="modal-error" id="modal-path-error" role="alert" aria-live="polite"></div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="modal-btn-cancel" type="button" id="modal-btn-cancel">Cancelar</button>
+        <button class="modal-btn-submit" type="button" id="modal-btn-submit" disabled>
+          <div class="modal-spinner" aria-hidden="true"></div>
+          Agregar
+        </button>
+      </div>
     </div>
 
-    <div class="modal-field">
-      <label class="modal-label" for="modal-path">Ruta</label>
-      <input
-        id="modal-path"
-        class="modal-input mono"
-        type="text"
-        autocapitalize="none"
-        autocorrect="off"
-        spellcheck="false"
-        autocomplete="off"
-        placeholder="~/code/miproyecto"
-        inputmode="url"
-      />
-      <div class="modal-error" id="modal-path-error" role="alert" aria-live="polite"></div>
-    </div>
+    <!-- ── Explorer view (swap) ───────────────────────────────── -->
+    <div id="explorer-view" role="region" aria-label="Explorador de carpetas">
 
-    <div class="modal-actions">
-      <button class="modal-btn-cancel" type="button" id="modal-btn-cancel">Cancelar</button>
-      <button class="modal-btn-submit" type="button" id="modal-btn-submit">
-        <div class="modal-spinner" aria-hidden="true"></div>
-        Agregar
-      </button>
-    </div>
+      <!-- Live region for screen reader nav announcements -->
+      <div id="explorer-live" aria-live="polite" aria-atomic="true"></div>
+
+      <!-- Header: back + breadcrumb + shortcuts -->
+      <div id="explorer-header">
+        <div id="explorer-header-top">
+          <button id="explorer-back-btn" type="button" aria-label="Volver al formulario">
+            <!-- Lucide: arrow-left -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="19" y1="12" x2="5" y2="12"/>
+              <polyline points="12 19 5 12 12 5"/>
+            </svg>
+            Volver
+          </button>
+          <nav id="explorer-breadcrumb" aria-label="Ubicación actual"></nav>
+        </div>
+
+        <div id="explorer-shortcuts" role="toolbar" aria-label="Accesos rápidos">
+          <button class="shortcut-chip" type="button" data-shortcut="~" aria-label="Ir a Home">
+            <!-- Lucide: home -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            Home
+          </button>
+          <button class="shortcut-chip" type="button" data-shortcut="~/Desktop" aria-label="Ir a Desktop">
+            <!-- Lucide: monitor -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+              <line x1="8" y1="21" x2="16" y2="21"/>
+              <line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+            Desktop
+          </button>
+          <button class="shortcut-chip" type="button" data-shortcut="~/Documents" aria-label="Ir a Documents">
+            <!-- Lucide: file-text -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10 9 9 9 8 9"/>
+            </svg>
+            Documents
+          </button>
+          <button class="shortcut-chip" type="button" data-shortcut="~/Downloads" aria-label="Ir a Downloads">
+            <!-- Lucide: download -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Downloads
+          </button>
+          <button class="shortcut-chip" type="button" data-shortcut="~/code" aria-label="Ir a carpeta code">
+            <!-- Lucide: folder -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+            </svg>
+            code
+          </button>
+        </div>
+      </div>
+
+      <!-- Body: skeleton / error / empty / list -->
+      <div id="explorer-body">
+        <!-- Truncated banner -->
+        <div id="explorer-truncated-banner" role="status">
+          Mostrando 500 de más entries — usá la ruta manualmente si necesitás otra.
+        </div>
+
+        <!-- Skeleton -->
+        <div id="explorer-skeleton" aria-hidden="true">
+          <div class="skeleton-row"><div class="skel skel-icon"></div><div class="skel skel-name"></div><div class="skel skel-meta"></div></div>
+          <div class="skeleton-row"><div class="skel skel-icon"></div><div class="skel skel-name" style="max-width:45%"></div><div class="skel skel-meta"></div></div>
+          <div class="skeleton-row"><div class="skel skel-icon"></div><div class="skel skel-name" style="max-width:70%"></div><div class="skel skel-meta"></div></div>
+          <div class="skeleton-row"><div class="skel skel-icon"></div><div class="skel skel-name" style="max-width:38%"></div><div class="skel skel-meta"></div></div>
+          <div class="skeleton-row"><div class="skel skel-icon"></div><div class="skel skel-name" style="max-width:55%"></div><div class="skel skel-meta"></div></div>
+        </div>
+
+        <!-- Error -->
+        <div id="explorer-error" role="alert">
+          <div id="explorer-error-msg"></div>
+          <button id="explorer-error-home" type="button">Volver a Home</button>
+        </div>
+
+        <!-- Empty dir -->
+        <div id="explorer-empty-dir">
+          <img src="/icon-192.png" alt="" aria-hidden="true" />
+          <span>Carpeta vacía</span>
+        </div>
+
+        <!-- Entries list -->
+        <ul id="explorer-entries" role="list" aria-label="Contenido del directorio"></ul>
+      </div>
+
+      <!-- Footer -->
+      <div id="explorer-footer">
+        <div id="explorer-footer-meta">
+          <div id="explorer-current-path" aria-label="Carpeta actual"></div>
+          <label id="explorer-toggle-hidden" aria-label="Mostrar archivos ocultos">
+            <span>Ocultos</span>
+            <input type="checkbox" id="explorer-hidden-chk" />
+          </label>
+        </div>
+        <button id="explorer-select-btn" type="button">Seleccionar esta carpeta</button>
+      </div>
+
+    </div><!-- /#explorer-view -->
+
   </div>
 </div>
 
@@ -1829,7 +2502,6 @@
   // Modal
   const modalBackdrop    = document.getElementById("project-modal-backdrop");
   const modalNameInput   = document.getElementById("modal-name");
-  const modalPathInput   = document.getElementById("modal-path");
   const modalNameError   = document.getElementById("modal-name-error");
   const modalPathError   = document.getElementById("modal-path-error");
   const modalBtnCancel   = document.getElementById("modal-btn-cancel");
@@ -2111,10 +2783,16 @@
 
   drawerBackdrop.addEventListener("click", closeDrawer);
 
-  // Esc closes drawer/modal
+  // Esc closes drawer/modal (explorer-aware)
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       if (modalBackdrop.classList.contains("visible")) {
+        // If explorer view is open, go back to form first
+        const explorerOpen = document.getElementById("explorer-view");
+        if (explorerOpen && explorerOpen.classList.contains("visible")) {
+          closeExplorerBackToForm();
+          return;
+        }
         closeModal();
         return;
       }
@@ -2564,6 +3242,349 @@
   }
 
   /* ────────────────────────────────────────────────────────────────────────
+     File Explorer — helpers
+  ──────────────────────────────────────────────────────────────────────── */
+
+  /** Fetch /fs/browse and return parsed JSON or throw */
+  async function fsBrowse(path, hidden) {
+    const params = new URLSearchParams({ path });
+    if (hidden) params.set("hidden", "1");
+    const res = await fetch(`/fs/browse?${params}`, { credentials: "include" });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || data.message || `Error ${res.status}`);
+    return data;
+  }
+
+  /** Bytes → human readable string */
+  function humanSize(bytes) {
+    if (bytes === 0) return "0 B";
+    const units = ["B", "KB", "MB", "GB"];
+    const i = Math.min(Math.floor(Math.log2(bytes) / 10), units.length - 1);
+    const val = bytes / Math.pow(1024, i);
+    return (i === 0 ? val : val.toFixed(1)) + " " + units[i];
+  }
+
+  /** ms timestamp → relative string */
+  function relativeTime(mtime) {
+    if (!mtime) return "";
+    const diff = Date.now() - mtime;
+    const m = Math.floor(diff / 60000);
+    if (m < 1)  return "ahora";
+    if (m < 60) return `hace ${m}m`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `hace ${h}h`;
+    const d = Math.floor(h / 24);
+    if (d < 30) return `hace ${d}d`;
+    const mo = Math.floor(d / 30);
+    return `hace ${mo}mo`;
+  }
+
+  /** Return SVG string for an entry */
+  function iconForEntry(entry) {
+    if (entry.isSymlink) {
+      // link icon (amber via CSS class)
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+      </svg>`;
+    }
+    if (entry.isDir) {
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--teal)" aria-hidden="true">
+        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+      </svg>`;
+    }
+    // File — pick icon by extension
+    const ext = (entry.name.split(".").pop() || "").toLowerCase();
+    if (["jpg","jpeg","png","gif","svg","webp","avif","ico"].includes(ext)) {
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+        <circle cx="8.5" cy="8.5" r="1.5"/>
+        <polyline points="21 15 16 10 5 21"/>
+      </svg>`;
+    }
+    if (["js","ts","jsx","tsx","py","go","rs","java","c","cpp","h","sh","json","yaml","yml","toml","xml","html","css"].includes(ext)) {
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="16 18 22 12 16 6"/>
+        <polyline points="8 6 2 12 8 18"/>
+      </svg>`;
+    }
+    // default file-text
+    return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="16" y1="13" x2="8" y2="13"/>
+      <line x1="16" y1="17" x2="8" y2="17"/>
+    </svg>`;
+  }
+
+  /* ────────────────────────────────────────────────────────────────────────
+     File Explorer — state & DOM refs
+  ──────────────────────────────────────────────────────────────────────── */
+
+  const explorerState = {
+    currentPath: "~",
+    showHidden: false,
+  };
+
+  const explorerView       = document.getElementById("explorer-view");
+  const explorerBreadcrumb = document.getElementById("explorer-breadcrumb");
+  const explorerBody       = document.getElementById("explorer-body");
+  const explorerSkeleton   = document.getElementById("explorer-skeleton");
+  const explorerError      = document.getElementById("explorer-error");
+  const explorerErrorMsg   = document.getElementById("explorer-error-msg");
+  const explorerErrorHome  = document.getElementById("explorer-error-home");
+  const explorerEmptyDir   = document.getElementById("explorer-empty-dir");
+  const explorerEntries    = document.getElementById("explorer-entries");
+  const explorerTruncated  = document.getElementById("explorer-truncated-banner");
+  const explorerCurrentPath= document.getElementById("explorer-current-path");
+  const explorerSelectBtn  = document.getElementById("explorer-select-btn");
+  const explorerHiddenChk  = document.getElementById("explorer-hidden-chk");
+  const explorerLive       = document.getElementById("explorer-live");
+  const explorerBackBtn    = document.getElementById("explorer-back-btn");
+  const modalFormView      = document.getElementById("modal-form-view");
+  const modalChooseBtn     = document.getElementById("modal-choose-btn");
+  const modalPathDisplay   = document.getElementById("modal-path-display");
+
+  /* ────────────────────────────────────────────────────────────────────────
+     File Explorer — render
+  ──────────────────────────────────────────────────────────────────────── */
+
+  /** Render breadcrumb from API breadcrumb array */
+  function renderBreadcrumb(breadcrumb) {
+    explorerBreadcrumb.innerHTML = "";
+    const frag = document.createDocumentFragment();
+    breadcrumb.forEach((seg, i) => {
+      const isLast = i === breadcrumb.length - 1;
+
+      const btn = document.createElement("button");
+      btn.className = "breadcrumb-seg" + (isLast ? " active" : "");
+      btn.type = "button";
+      btn.textContent = seg.name || "/";
+      btn.setAttribute("aria-label", isLast ? `Carpeta actual: ${seg.name}` : `Ir a ${seg.name}`);
+      if (isLast) btn.setAttribute("aria-current", "true");
+      if (!isLast) {
+        btn.addEventListener("click", () => navigateTo(seg.path));
+      }
+      frag.appendChild(btn);
+
+      if (!isLast) {
+        const sep = document.createElement("span");
+        sep.className = "breadcrumb-sep";
+        sep.setAttribute("aria-hidden", "true");
+        sep.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>`;
+        frag.appendChild(sep);
+      }
+    });
+    explorerBreadcrumb.appendChild(frag);
+    // scroll breadcrumb to end to show current location
+    explorerBreadcrumb.scrollLeft = explorerBreadcrumb.scrollWidth;
+  }
+
+  /** Render entries list using DocumentFragment for perf */
+  function renderEntries(entries) {
+    explorerEntries.innerHTML = "";
+
+    if (entries.length === 0) {
+      explorerEmptyDir.classList.add("visible");
+      explorerEntries.style.display = "none";
+      return;
+    }
+
+    explorerEmptyDir.classList.remove("visible");
+    explorerEntries.style.display = "";
+
+    const frag = document.createDocumentFragment();
+
+    entries.forEach((entry, idx) => {
+      const isDir = entry.isDir || (entry.isSymlink && entry.isDir);
+      const isSymlink = entry.isSymlink;
+
+      const li = document.createElement("li");
+      li.className = "explorer-entry" +
+        (isDir ? " dir" : " file") +
+        (isSymlink ? " symlink" : "");
+      // staggered animation delay (cap at 30 entries for perf)
+      if (idx < 30) li.style.animationDelay = `${idx * 18}ms`;
+
+      if (isDir) {
+        li.setAttribute("role", "button");
+        li.setAttribute("tabindex", "0");
+        li.setAttribute("aria-label", `Abrir carpeta ${entry.name}`);
+      } else {
+        const sizeStr = humanSize(entry.size || 0);
+        li.setAttribute("aria-label", `Archivo ${entry.name}, ${sizeStr}`);
+        li.setAttribute("aria-disabled", "true");
+      }
+
+      // Icon
+      const iconWrap = document.createElement("div");
+      iconWrap.className = "explorer-entry-icon";
+      iconWrap.innerHTML = iconForEntry(entry);
+
+      // Name
+      const nameEl = document.createElement("div");
+      nameEl.className = "explorer-entry-name";
+      nameEl.textContent = entry.name;
+      nameEl.title = entry.name;
+
+      li.appendChild(iconWrap);
+      li.appendChild(nameEl);
+
+      // Meta (files only)
+      if (!isDir) {
+        const meta = document.createElement("div");
+        meta.className = "explorer-entry-meta";
+        if (entry.size != null) {
+          const sizeEl = document.createElement("span");
+          sizeEl.className = "explorer-entry-size";
+          sizeEl.textContent = humanSize(entry.size);
+          meta.appendChild(sizeEl);
+        }
+        if (entry.mtime) {
+          const mtimeEl = document.createElement("span");
+          mtimeEl.className = "explorer-entry-mtime";
+          mtimeEl.textContent = relativeTime(entry.mtime);
+          meta.appendChild(mtimeEl);
+        }
+        li.appendChild(meta);
+      }
+
+      // Navigate on tap/click/enter for dirs
+      if (isDir) {
+        li.addEventListener("click", () => navigateTo(entry.path));
+        li.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            navigateTo(entry.path);
+          }
+        });
+      }
+
+      frag.appendChild(li);
+    });
+
+    explorerEntries.appendChild(frag);
+
+    // Trigger nav animation
+    explorerEntries.classList.remove("navigating");
+    void explorerEntries.offsetWidth; // reflow
+    explorerEntries.classList.add("navigating");
+  }
+
+  /** Show/hide loading skeleton */
+  function setExplorerLoading(loading) {
+    explorerSkeleton.classList.toggle("visible", loading);
+    explorerEntries.style.display = loading ? "none" : "";
+    explorerEmptyDir.classList.toggle("visible", false);
+    explorerError.classList.toggle("visible", false);
+    explorerTruncated.classList.toggle("visible", false);
+  }
+
+  /** Render the full explorer for a given /fs/browse response */
+  function renderExplorer(data) {
+    explorerState.currentPath = data.path;
+
+    renderBreadcrumb(data.breadcrumb || [{ name: data.path, path: data.path }]);
+    renderEntries(data.entries || []);
+
+    explorerCurrentPath.textContent = data.path;
+    explorerCurrentPath.setAttribute("aria-label", `Carpeta actual: ${data.path}`);
+    explorerTruncated.classList.toggle("visible", !!data.truncated);
+
+    // Announce to screen reader
+    explorerLive.textContent = `Mostrando carpeta ${data.path}`;
+  }
+
+  /** Navigate to a path: fetch + render */
+  async function navigateTo(path) {
+    setExplorerLoading(true);
+    explorerBody.scrollTop = 0;
+    try {
+      const data = await fsBrowse(path, explorerState.showHidden ? 1 : 0);
+      setExplorerLoading(false);
+      renderExplorer(data);
+    } catch (err) {
+      setExplorerLoading(false);
+      explorerError.classList.add("visible");
+      explorerEntries.style.display = "none";
+      explorerEmptyDir.classList.remove("visible");
+      explorerErrorMsg.textContent = err.message || "Error al acceder a esta carpeta.";
+    }
+  }
+
+  /* ────────────────────────────────────────────────────────────────────────
+     File Explorer — open / close / select
+  ──────────────────────────────────────────────────────────────────────── */
+
+  function openExplorer() {
+    modalFormView.style.display = "none";
+    explorerView.classList.add("visible");
+    // Focus back button (first interactive element)
+    explorerBackBtn.focus();
+    // Fetch starting at ~ or current selected path
+    navigateTo(explorerState.currentPath || "~");
+  }
+
+  function closeExplorerBackToForm() {
+    explorerView.classList.remove("visible");
+    modalFormView.style.display = "";
+    modalChooseBtn.focus();
+  }
+
+  function selectCurrentFolder() {
+    const path = explorerState.currentPath;
+    // Update form display
+    modalPathDisplay.innerHTML = `Seleccionado: <strong>${_escapeHTML(path)}</strong> <button id="modal-path-change-btn" type="button" aria-label="Cambiar carpeta">cambiar</button>`;
+    modalPathDisplay.classList.add("selected");
+    // Re-bind "cambiar" button
+    const changeBtn = document.getElementById("modal-path-change-btn");
+    if (changeBtn) changeBtn.addEventListener("click", openExplorer);
+    // Enable submit
+    modalBtnSubmit.disabled = false;
+    // Remove path error if any
+    modalPathError.textContent = "";
+    // Go back to form
+    closeExplorerBackToForm();
+  }
+
+  /** Simple HTML escape (reuse _ansiEscapeHTML logic but standalone) */
+  function _escapeHTML(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  /* ────────────────────────────────────────────────────────────────────────
+     File Explorer — event bindings
+  ──────────────────────────────────────────────────────────────────────── */
+
+  modalChooseBtn.addEventListener("click", openExplorer);
+
+  explorerBackBtn.addEventListener("click", closeExplorerBackToForm);
+
+  explorerSelectBtn.addEventListener("click", selectCurrentFolder);
+
+  explorerErrorHome.addEventListener("click", () => {
+    explorerError.classList.remove("visible");
+    navigateTo("~");
+  });
+
+  explorerHiddenChk.addEventListener("change", () => {
+    explorerState.showHidden = explorerHiddenChk.checked;
+    navigateTo(explorerState.currentPath);
+  });
+
+  // Shortcut chips
+  document.querySelectorAll(".shortcut-chip").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      const path = chip.dataset.shortcut;
+      if (path) navigateTo(path);
+    });
+  });
+
+  /* ────────────────────────────────────────────────────────────────────────
      Project modal
   ──────────────────────────────────────────────────────────────────────── */
 
@@ -2572,8 +3593,15 @@
   function openModal() {
     previousFocus = document.activeElement;
     modalNameInput.value = "";
-    modalPathInput.value = "";
+    // Reset path picker
+    explorerState.currentPath = "~";
+    modalPathDisplay.textContent = "Ninguna carpeta seleccionada";
+    modalPathDisplay.classList.remove("selected");
+    modalBtnSubmit.disabled = true;
     clearModalErrors();
+    // Ensure form view is visible, explorer hidden
+    modalFormView.style.display = "";
+    explorerView.classList.remove("visible");
     modalBackdrop.classList.add("visible");
     modalNameInput.focus();
   }
@@ -2581,7 +3609,9 @@
   function closeModal() {
     modalBackdrop.classList.remove("visible");
     modalBtnSubmit.classList.remove("loading");
-    modalBtnSubmit.disabled = false;
+    modalBtnSubmit.disabled = true;
+    explorerView.classList.remove("visible");
+    modalFormView.style.display = "";
     clearModalErrors();
     if (previousFocus) previousFocus.focus();
   }
@@ -2590,11 +3620,10 @@
     modalNameError.textContent = "";
     modalPathError.textContent = "";
     modalNameInput.removeAttribute("aria-invalid");
-    modalPathInput.removeAttribute("aria-invalid");
   }
 
   function setModalError(inputEl, errorEl, msg) {
-    inputEl.setAttribute("aria-invalid", "true");
+    if (inputEl) inputEl.setAttribute("aria-invalid", "true");
     errorEl.textContent = msg;
   }
 
@@ -2612,16 +3641,19 @@
   modalBtnSubmit.addEventListener("click", async () => {
     clearModalErrors();
     const name = modalNameInput.value.trim();
-    const path = modalPathInput.value.trim();
+    const path = explorerState.currentPath;
     let valid = true;
 
     if (!name) {
       setModalError(modalNameInput, modalNameError, "El nombre es requerido.");
       valid = false;
     }
-    if (!path) {
-      setModalError(modalPathInput, modalPathError, "La ruta es requerida.");
-      valid = false;
+    if (!path || path === "~" || modalPathDisplay.textContent === "Ninguna carpeta seleccionada") {
+      // still check if display shows selection
+      if (!modalPathDisplay.classList.contains("selected")) {
+        setModalError(null, modalPathError, "Seleccioná una carpeta primero.");
+        valid = false;
+      }
     }
     if (!valid) return;
 
@@ -2634,21 +3666,21 @@
       renderProjects();
       closeModal();
     } catch (err) {
-      // Show error on path field (most likely invalid path)
-      setModalError(modalPathInput, modalPathError, err.message || "Error al crear el proyecto.");
+      setModalError(null, modalPathError, err.message || "Error al crear el proyecto.");
       modalBtnSubmit.classList.remove("loading");
       modalBtnSubmit.disabled = false;
-      modalPathInput.focus();
+      modalChooseBtn.focus();
     }
   });
 
-  // Submit on Enter in name field
+  // Submit on Enter in name field → focus choose btn
   modalNameInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") { e.preventDefault(); modalPathInput.focus(); }
+    if (e.key === "Enter") { e.preventDefault(); modalChooseBtn.focus(); }
   });
-  modalPathInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") { e.preventDefault(); modalBtnSubmit.click(); }
-  });
+
+  // Esc: if in explorer view → back to form first, then Esc closes modal
+  // (handled in existing keydown listener — needs update)
+  // Patch the existing Esc handler to check explorer view first
 
   /* ────────────────────────────────────────────────────────────────────────
      Composer events
