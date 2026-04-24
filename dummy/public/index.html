@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="AgentDeck" />
+  <meta name="theme-color" content="#0a0a14" />
+  <link rel="icon" href="/icon-32.png" />
+  <link rel="apple-touch-icon" href="/icon-180.png" />
+  <title>AgentDeck</title>
+
+  <style>
+    /* ── Reset ──────────────────────────────────────────────────────────── */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* ── Design tokens ──────────────────────────────────────────────────── */
+    :root {
+      /* Background layers */
+      --bg-base:       #0a0a14;
+      --bg-deep:       #020206;
+      --bg-surface:    #0f101e;
+      --bg-elevated:   #141428;
+      --bg-hover:      #1a1b32;
+
+      /* Brand accents */
+      --violet:        #a78bfa;
+      --violet-dark:   #7c6df2;
+      --violet-dim:    rgba(167, 139, 250, 0.15);
+      --violet-glow:   rgba(167, 139, 250, 0.08);
+      --teal:          #2dd4bf;
+      --cyan:          #22d3ee;
+      --rose:          #fb7185;
+      --rose-dim:      rgba(251, 113, 133, 0.12);
+
+      /* Text */
+      --text-primary:    #e2e8f0;
+      --text-secondary:  #94a3b8;
+      --text-tertiary:   #64748b;
+      --text-on-violet:  #0a0a14;
+
+      /* Borders */
+      --border:        rgba(167, 139, 250, 0.12);
+      --border-subtle: rgba(255, 255, 255, 0.05);
+
+      /* Gradients */
+      --grad-brand:    linear-gradient(135deg, #a78bfa 0%, #2dd4bf 100%);
+      --grad-bubble-user: linear-gradient(135deg, #a78bfa 0%, #7c6df2 100%);
+
+      /* Spacing (4px scale) */
+      --s1: 4px;
+      --s2: 8px;
+      --s3: 12px;
+      --s4: 16px;
+      --s5: 20px;
+      --s6: 24px;
+      --s8: 32px;
+      --s10: 40px;
+      --s12: 48px;
+
+      /* Layout */
+      --topbar-h:    56px;
+      --chips-h:     44px;
+      --composer-min-h: 60px;
+
+      /* Typography */
+      --font-sans:  -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      --font-mono:  "Menlo", "Consolas", "DejaVu Sans Mono", "Courier New", monospace;
+
+      /* Radius */
+      --radius-sm:  4px;
+      --radius-md:  12px;
+      --radius-lg:  16px;
+      --radius-xl:  20px;
+      --radius-full: 9999px;
+
+      /* Transitions */
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-in:  cubic-bezier(0.4, 0, 1, 1);
+    }
+
+    /* ── Base ────────────────────────────────────────────────────────────── */
+    html {
+      height: 100%;
+      /* Prevent overscroll on mobile */
+      overscroll-behavior: none;
+    }
+
+    body {
+      height: 100dvh;
+      width: 100%;
+      overflow: hidden;
+      background: var(--bg-base);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 16px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ── App shell ───────────────────────────────────────────────────────── */
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      /* Safe areas for notch/home-indicator */
+      padding-top: env(safe-area-inset-top);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+
+    /* ── Topbar ──────────────────────────────────────────────────────────── */
+    #topbar {
+      flex-shrink: 0;
+      height: var(--topbar-h);
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 var(--s4);
+      gap: var(--s3);
+      /* Subtle glassmorphism */
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      position: relative;
+      z-index: 10;
+    }
+
+    #topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: var(--s2);
+      flex: 1;
+      min-width: 0;
+    }
+
+    #topbar-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--s2);
+      flex-shrink: 0;
+      object-fit: cover;
+    }
+
+    #topbar-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      min-width: 0;
+    }
+
+    #topbar-name {
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.2;
+      /* Gradient text */
+      background: var(--grad-brand);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      white-space: nowrap;
+    }
+
+    #topbar-cwd {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-tertiary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 200px;
+      line-height: 1.2;
+    }
+
+    /* Topbar actions */
+    #topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--s2);
+      flex-shrink: 0;
+    }
+
+    .topbar-btn {
+      display: flex;
+      align-items: center;
+      gap: var(--s1);
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--s2);
+      padding: var(--s1) var(--s3);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background 150ms var(--ease-out), border-color 150ms var(--ease-out), color 150ms var(--ease-out);
+      min-height: 32px;
+      white-space: nowrap;
+    }
+
+    .topbar-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .topbar-btn:active {
+      transform: scale(0.97);
+    }
+
+    .topbar-btn svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+
+    #btn-kill {
+      color: var(--rose);
+      border-color: rgba(251, 113, 133, 0.25);
+    }
+
+    #btn-kill:hover {
+      background: var(--rose-dim);
+      border-color: rgba(251, 113, 133, 0.4);
+      color: var(--rose);
+    }
+
+    /* ── Chat area ───────────────────────────────────────────────────────── */
+    #chat-scroll {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+    }
+
+    #chat-inner {
+      display: flex;
+      flex-direction: column;
+      gap: var(--s4);
+      padding: var(--s6) var(--s4) var(--s4);
+      min-height: 100%;
+    }
+
+    /* ── Empty state ─────────────────────────────────────────────────────── */
+    #empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      gap: var(--s4);
+      padding: var(--s12) var(--s6);
+      text-align: center;
+    }
+
+    #empty-state img {
+      width: 80px;
+      height: 80px;
+      border-radius: var(--s4);
+      opacity: 0.9;
+    }
+
+    #empty-state h2 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    #empty-state p {
+      font-size: 14px;
+      color: var(--text-tertiary);
+      max-width: 280px;
+      line-height: 1.6;
+    }
+
+    #empty-suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--s2);
+      justify-content: center;
+      margin-top: var(--s2);
+    }
+
+    .suggestion-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--s1);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      padding: var(--s2) var(--s4);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--violet);
+      cursor: pointer;
+      transition: background 150ms var(--ease-out), border-color 150ms var(--ease-out), transform 150ms var(--ease-out);
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .suggestion-chip:hover {
+      background: var(--violet-dim);
+      border-color: rgba(167, 139, 250, 0.3);
+    }
+
+    .suggestion-chip:active {
+      transform: scale(0.96);
+    }
+
+    /* ── Message bubbles ─────────────────────────────────────────────────── */
+    .msg-row {
+      display: flex;
+      align-items: flex-end;
+      gap: var(--s2);
+      /* Entry animation */
+      animation: msg-in 200ms var(--ease-out) both;
+    }
+
+    @keyframes msg-in {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* User messages — right-aligned */
+    .msg-row.user {
+      flex-direction: row-reverse;
+    }
+
+    /* Agent messages — left-aligned, with avatar */
+    .msg-row.agent {
+      flex-direction: row;
+    }
+
+    /* System messages — centered */
+    .msg-row.system {
+      justify-content: center;
+    }
+
+    /* Avatar for agent */
+    .msg-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: var(--s1);
+      flex-shrink: 0;
+      align-self: flex-end;
+      object-fit: cover;
+      opacity: 0.85;
+    }
+
+    /* Spacer to align user bubble when there's no avatar */
+    .msg-no-avatar {
+      width: 28px;
+      flex-shrink: 0;
+    }
+
+    .msg-content {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      max-width: 82%;
+    }
+
+    .msg-row.user .msg-content {
+      align-items: flex-end;
+      max-width: 75%;
+    }
+
+    .msg-bubble {
+      padding: var(--s3) var(--s4);
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      line-height: 1.6;
+      word-break: break-word;
+      position: relative;
+    }
+
+    /* User bubble */
+    .msg-row.user .msg-bubble {
+      background: var(--grad-bubble-user);
+      color: var(--text-on-violet);
+      border-radius: var(--radius-lg) var(--radius-sm) var(--radius-lg) var(--radius-lg);
+    }
+
+    /* Agent bubble */
+    .msg-row.agent .msg-bubble {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      border-radius: var(--radius-sm) var(--radius-lg) var(--radius-lg) var(--radius-lg);
+      white-space: pre-wrap;
+      tab-size: 2;
+    }
+
+    /* System bubble */
+    .msg-row.system .msg-bubble {
+      background: transparent;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-full);
+      color: var(--text-tertiary);
+      font-family: var(--font-sans);
+      font-size: 12px;
+      padding: var(--s1) var(--s4);
+    }
+
+    /* Streaming indicator inside agent bubble */
+    .msg-bubble.streaming::after {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 14px;
+      background: var(--teal);
+      border-radius: 2px;
+      margin-left: 4px;
+      vertical-align: text-bottom;
+      animation: blink-cursor 700ms steps(2) infinite;
+    }
+
+    @keyframes blink-cursor {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    .msg-timestamp {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      padding: 0 var(--s1);
+      opacity: 0.6;
+    }
+
+    /* Show-more fold */
+    .msg-fold {
+      display: none;
+      align-items: center;
+      gap: var(--s2);
+      font-size: 12px;
+      color: var(--violet);
+      cursor: pointer;
+      padding: var(--s1) 0;
+      background: none;
+      border: none;
+    }
+
+    .msg-fold.visible {
+      display: flex;
+    }
+
+    .msg-fold svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* ── Typing indicator ────────────────────────────────────────────────── */
+    #typing-indicator {
+      display: none;
+      align-items: center;
+      gap: var(--s2);
+      padding: 0 var(--s4);
+      animation: msg-in 200ms var(--ease-out) both;
+    }
+
+    #typing-indicator.visible {
+      display: flex;
+    }
+
+    .typing-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: var(--s1);
+      object-fit: cover;
+      opacity: 0.85;
+    }
+
+    .typing-dots {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm) var(--radius-lg) var(--radius-lg) var(--radius-lg);
+      padding: var(--s3) var(--s4);
+    }
+
+    .typing-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--violet);
+      animation: typing-bounce 1.2s ease-in-out infinite;
+    }
+
+    .typing-dot:nth-child(1) { animation-delay: 0ms; }
+    .typing-dot:nth-child(2) { animation-delay: 150ms; }
+    .typing-dot:nth-child(3) { animation-delay: 300ms; }
+
+    @keyframes typing-bounce {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+      30% { transform: translateY(-5px); opacity: 1; }
+    }
+
+    /* ── Quick chips bar ─────────────────────────────────────────────────── */
+    #chips-bar {
+      flex-shrink: 0;
+      height: var(--chips-h);
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 var(--s4);
+      gap: var(--s2);
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+
+    #chips-bar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .key-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--s2);
+      padding: 0 var(--s3);
+      height: 30px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: background 100ms, border-color 100ms, color 100ms;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .key-chip:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+      border-color: rgba(167, 139, 250, 0.25);
+    }
+
+    .key-chip:active {
+      background: var(--violet-dim);
+      color: var(--violet);
+    }
+
+    /* ── Composer ────────────────────────────────────────────────────────── */
+    #composer-wrap {
+      flex-shrink: 0;
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border);
+      padding: var(--s3) var(--s4);
+      padding-bottom: calc(var(--s3) + env(safe-area-inset-bottom));
+    }
+
+    #composer {
+      display: flex;
+      align-items: flex-end;
+      gap: var(--s3);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: var(--s2) var(--s2) var(--s2) var(--s4);
+      transition: border-color 150ms var(--ease-out);
+    }
+
+    #composer:focus-within {
+      border-color: rgba(167, 139, 250, 0.4);
+      box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.08);
+    }
+
+    #composer-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      resize: none;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-size: 16px; /* Obligatorio iOS — previene auto-zoom */
+      line-height: 1.5;
+      max-height: calc(6 * 1.5 * 16px); /* 6 líneas */
+      overflow-y: auto;
+      scrollbar-width: none;
+      caret-color: var(--teal);
+      /* Input corrections iOS */
+      -webkit-appearance: none;
+    }
+
+    #composer-input::-webkit-scrollbar {
+      display: none;
+    }
+
+    #composer-input::placeholder {
+      color: var(--text-tertiary);
+    }
+
+    #btn-send {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--grad-brand);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: opacity 150ms var(--ease-out), transform 150ms var(--ease-out), box-shadow 150ms var(--ease-out);
+    }
+
+    #btn-send:disabled {
+      opacity: 0.3;
+      cursor: default;
+    }
+
+    #btn-send:not(:disabled):hover {
+      box-shadow: 0 2px 12px rgba(167, 139, 250, 0.4);
+    }
+
+    #btn-send:not(:disabled):active {
+      transform: scale(0.94);
+    }
+
+    #btn-send svg {
+      width: 20px;
+      height: 20px;
+      color: #0a0a14;
+    }
+
+    /* ── Overlay ─────────────────────────────────────────────────────────── */
+    #overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 10, 20, 0.80);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: var(--s6);
+      z-index: 50;
+      animation: fade-in 200ms var(--ease-out) both;
+    }
+
+    @keyframes fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    #overlay.visible {
+      display: flex;
+    }
+
+    #overlay-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--s4);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: var(--s8);
+      max-width: 320px;
+      width: calc(100% - var(--s8));
+      text-align: center;
+      animation: overlay-in 250ms var(--ease-out) both;
+    }
+
+    @keyframes overlay-in {
+      from { opacity: 0; transform: translateY(16px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    #overlay-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: var(--s3);
+      opacity: 0.7;
+    }
+
+    #overlay-msg {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    #overlay-btn {
+      background: var(--grad-brand);
+      color: #0a0a14;
+      font-size: 15px;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      padding: var(--s3) var(--s8);
+      cursor: pointer;
+      transition: opacity 150ms, transform 150ms;
+      min-height: 44px;
+    }
+
+    #overlay-btn:hover { opacity: 0.9; }
+    #overlay-btn:active { transform: scale(0.97); }
+
+    /* ── Scrollbar (desktop) ─────────────────────────────────────────────── */
+    #chat-scroll::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    #chat-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    #chat-scroll::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: var(--radius-full);
+    }
+
+    /* ── Reduced motion ──────────────────────────────────────────────────── */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    /* ── Desktop layout tweaks ───────────────────────────────────────────── */
+    @media (min-width: 768px) {
+      #chat-inner {
+        max-width: 800px;
+        margin: 0 auto;
+        width: 100%;
+        padding: var(--s8) var(--s6) var(--s6);
+      }
+
+      #typing-indicator {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 0 var(--s6);
+        width: 100%;
+      }
+
+      #composer-wrap {
+        padding-left: calc((100% - 800px) / 2 + var(--s6));
+        padding-right: calc((100% - 800px) / 2 + var(--s6));
+      }
+
+      #chips-bar {
+        padding-left: calc((100% - 800px) / 2 + var(--s6));
+        padding-right: calc((100% - 800px) / 2 + var(--s6));
+      }
+    }
+
+    @media (min-width: 768px) {
+      .msg-content {
+        max-width: 75%;
+      }
+
+      .msg-row.user .msg-content {
+        max-width: 65%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ── Topbar ─────────────────────────────────────────────────────────── -->
+  <header id="topbar" role="banner">
+    <div id="topbar-brand">
+      <img id="topbar-avatar" src="/icon-192.png" alt="AgentDeck" />
+      <div id="topbar-info">
+        <span id="topbar-name">AgentDeck</span>
+        <span id="topbar-cwd" aria-label="Directorio actual">~/</span>
+      </div>
+    </div>
+    <div id="topbar-actions">
+      <button id="btn-kill" class="topbar-btn" aria-label="Matar proceso actual">
+        <!-- Lucide: octagon-x (stop sign with X — clearest kill affordance) -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/>
+          <line x1="15" y1="9" x2="9" y2="15"/>
+          <line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+        Kill
+      </button>
+      <button id="btn-logout" class="topbar-btn" aria-label="Cerrar sesión">
+        <!-- Lucide: log-out -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        Logout
+      </button>
+    </div>
+  </header>
+
+  <!-- ── Chat scroll zone ───────────────────────────────────────────────── -->
+  <main id="chat-scroll" role="main" aria-label="Conversación" aria-live="polite" aria-atomic="false">
+    <div id="chat-inner">
+
+      <!-- Empty state -->
+      <div id="empty-state" role="status">
+        <img src="/icon-192.png" alt="" aria-hidden="true" />
+        <h2>AgentDeck ready</h2>
+        <p>Tu shell, interfaz chat. Escribí un comando o probá una sugerencia.</p>
+        <div id="empty-suggestions" role="group" aria-label="Comandos sugeridos">
+          <button class="suggestion-chip" data-cmd="ls ~" type="button">ls ~</button>
+          <button class="suggestion-chip" data-cmd="git status" type="button">git status</button>
+          <button class="suggestion-chip" data-cmd='claude --print "hola"' type="button">claude --print</button>
+          <button class="suggestion-chip" data-cmd="pwd" type="button">pwd</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Typing indicator (outside chat-inner, appended before composer) -->
+  <div id="typing-indicator" role="status" aria-label="El agente está procesando">
+    <img class="typing-avatar" src="/icon-192.png" alt="" aria-hidden="true" />
+    <div class="typing-dots" aria-hidden="true">
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+    </div>
+  </div>
+
+  <!-- ── Quick chips bar ────────────────────────────────────────────────── -->
+  <div id="chips-bar" role="toolbar" aria-label="Teclas rápidas">
+    <button class="key-chip" data-seq="\x1b"     type="button" aria-label="Escape">Esc</button>
+    <button class="key-chip" data-seq="\t"        type="button" aria-label="Tab">Tab</button>
+    <button class="key-chip" data-seq="\x03"      type="button" aria-label="Control C">Ctrl+C</button>
+    <button class="key-chip" data-seq="\x04"      type="button" aria-label="Control D">Ctrl+D</button>
+    <button class="key-chip" data-seq="\x0c"      type="button" aria-label="Control L">Ctrl+L</button>
+    <button class="key-chip" data-seq="\x1b[A"    type="button" aria-label="Flecha arriba">&#8593;</button>
+    <button class="key-chip" data-seq="\x1b[B"    type="button" aria-label="Flecha abajo">&#8595;</button>
+    <button class="key-chip" data-cmd="clear"     type="button" aria-label="Limpiar terminal">clear</button>
+  </div>
+
+  <!-- ── Composer ───────────────────────────────────────────────────────── -->
+  <section id="composer-wrap" aria-label="Compositor de comandos">
+    <div id="composer">
+      <textarea
+        id="composer-input"
+        rows="1"
+        placeholder="Escribí un comando…"
+        autocapitalize="none"
+        autocorrect="off"
+        spellcheck="false"
+        autocomplete="off"
+        inputmode="text"
+        aria-label="Comando"
+        aria-multiline="true"
+      ></textarea>
+      <button id="btn-send" type="button" disabled aria-label="Enviar comando">
+        <!-- Lucide: arrow-up -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="12" y1="19" x2="12" y2="5"/>
+          <polyline points="5 12 12 5 19 12"/>
+        </svg>
+      </button>
+    </div>
+  </section>
+
+</div>
+
+<!-- ── Disconnect overlay ─────────────────────────────────────────────── -->
+<div id="overlay" role="alertdialog" aria-modal="true" aria-labelledby="overlay-msg">
+  <div id="overlay-card">
+    <img id="overlay-avatar" src="/icon-192.png" alt="AgentDeck mascot" />
+    <p id="overlay-msg">Disconnected</p>
+    <button id="overlay-btn" type="button">Reconnect</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ────────────────────────────────────────────────────────────────────────
+     Constants & state
+  ──────────────────────────────────────────────────────────────────────── */
+  const MAX_MESSAGES   = 200;   // DOM messages limit
+  const CHUNK_FOLD_KB  = 50;    // bytes — fold bubble if larger
+  const STREAM_TIMEOUT = 700;   // ms — close bubble after silence
+
+  let ws              = null;
+  let intentionalClose = false;
+  let streamBubble    = null;   // Current open agent bubble element
+  let streamTimer     = null;   // setTimeout handle for closing stream
+  let streamingActive = false;  // Whether PTY is mid-output
+  let userScrolled    = false;  // True if user manually scrolled up
+
+  /* ────────────────────────────────────────────────────────────────────────
+     DOM refs
+  ──────────────────────────────────────────────────────────────────────── */
+  const chatScroll     = document.getElementById("chat-scroll");
+  const chatInner      = document.getElementById("chat-inner");
+  const emptyState     = document.getElementById("empty-state");
+  const typingIndicator = document.getElementById("typing-indicator");
+  const composerInput  = document.getElementById("composer-input");
+  const btnSend        = document.getElementById("btn-send");
+  const overlay        = document.getElementById("overlay");
+  const overlayMsg     = document.getElementById("overlay-msg");
+  const overlayBtn     = document.getElementById("overlay-btn");
+  const topbarCwd      = document.getElementById("topbar-cwd");
+
+  /* ────────────────────────────────────────────────────────────────────────
+     Utilities
+  ──────────────────────────────────────────────────────────────────────── */
+
+  /** Format hh:mm timestamp */
+  function now() {
+    const d = new Date();
+    return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+  }
+
+  /** Strip ANSI escape sequences from terminal output */
+  function stripAnsi(str) {
+    return str
+      // CSI sequences — colors, cursor, modes. Covers ESC[?2004h,
+      // ESC[30m, ESC[1;31m, ESC[K, ESC[>0c etc. The `[?!>` branch
+      // captures private/DEC-flavored CSI sequences that zsh emits
+      // (like bracketed paste ?2004h) which the previous regex missed.
+      .replace(/\x1b\[[\?\!\>]?[0-9;:]*[A-Za-z@~]/g, "")
+      // OSC sequences — titles, hyperlinks. ESC ] ... BEL or ESC ] ... ESC \
+      .replace(/\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)/g, "")
+      // Single-char ESC sequences: ESC followed by one uppercase or symbol
+      .replace(/\x1b[@-Z\\-_]/g, "")
+      // Charset designators: ESC ( A, ESC ) B, ESC # 8
+      .replace(/\x1b[()#%][0-9A-Za-z]/g, "")
+      // Carriage returns not followed by newline (overwrite trick)
+      .replace(/\r(?!\n)/g, "")
+      // Null, BEL, backspace
+      .replace(/[\x00\x07\x08]/g, "");
+  }
+
+  /** Detect CWD update from prompt patterns like "user@host:/path$ " */
+  function detectCwd(text) {
+    // Common shell prompt patterns: path before $, >, % markers
+    const m = text.match(/(?:^|\n|\r)[^\r\n]*?([~\/][^\r\n$#%>]*)[#$%>]\s*$/m);
+    if (m) {
+      let path = m[1].trim();
+      // Simplify /Users/xxx → ~
+      if (path.startsWith("/Users/") || path.startsWith("/home/")) {
+        path = "~" + path.replace(/^\/[^/]+\/[^/]+/, "");
+      }
+      if (path) topbarCwd.textContent = path;
+    }
+  }
+
+  /** Auto-resize textarea height */
+  function autoResize() {
+    composerInput.style.height = "auto";
+    const lineH = 16 * 1.5; // font-size * line-height
+    const max   = lineH * 6;
+    composerInput.style.height = Math.min(composerInput.scrollHeight, max) + "px";
+    btnSend.disabled = composerInput.value.trim() === "";
+  }
+
+  /** Scroll to bottom if user hasn't manually scrolled up */
+  function scrollToBottom(force = false) {
+    if (force || !userScrolled) {
+      chatScroll.scrollTo({ top: chatScroll.scrollHeight, behavior: "smooth" });
+    }
+  }
+
+  /** Track manual scroll */
+  chatScroll.addEventListener("scroll", () => {
+    const distanceFromBottom = chatScroll.scrollHeight - chatScroll.scrollTop - chatScroll.clientHeight;
+    userScrolled = distanceFromBottom > 80;
+  }, { passive: true });
+
+  /** Hide empty state once there's content */
+  function maybeHideEmpty() {
+    if (emptyState && emptyState.parentNode === chatInner) {
+      chatInner.removeChild(emptyState);
+    }
+  }
+
+  /** Enforce DOM message count limit — remove oldest rows */
+  function enforceMessageLimit() {
+    const rows = chatInner.querySelectorAll(".msg-row");
+    const excess = rows.length - MAX_MESSAGES;
+    for (let i = 0; i < excess; i++) {
+      rows[i].remove();
+    }
+  }
+
+  /* ────────────────────────────────────────────────────────────────────────
+     Message factory functions
+  ──────────────────────────────────────────────────────────────────────── */
+
+  function addUserMessage(text) {
+    maybeHideEmpty();
+    const row = document.createElement("div");
+    row.className = "msg-row user";
+    row.setAttribute("role", "listitem");
+
+    const content = document.createElement("div");
+    content.className = "msg-content";
+
+    const bubble = document.createElement("div");
+    bubble.className = "msg-bubble";
+    bubble.textContent = text;
+
+    const ts = document.createElement("div");
+    ts.className = "msg-timestamp";
+    ts.setAttribute("aria-label", `Enviado a las ${now()}`);
+    ts.textContent = now();
+
+    content.appendChild(bubble);
+    content.appendChild(ts);
+    row.appendChild(content);
+
+    chatInner.appendChild(row);
+    enforceMessageLimit();
+    scrollToBottom(true);
+    return row;
+  }
+
+  function openAgentBubble() {
+    maybeHideEmpty();
+    const row = document.createElement("div");
+    row.className = "msg-row agent";
+    row.setAttribute("role", "listitem");
+
+    const avatar = document.createElement("img");
+    avatar.className = "msg-avatar";
+    avatar.src = "/icon-192.png";
+    avatar.alt = "";
+    avatar.setAttribute("aria-hidden", "true");
+
+    const content = document.createElement("div");
+    content.className = "msg-content";
+
+    const bubble = document.createElement("div");
+    bubble.className = "msg-bubble streaming";
+    bubble.setAttribute("aria-live", "polite");
+
+    const ts = document.createElement("div");
+    ts.className = "msg-timestamp";
+
+    content.appendChild(bubble);
+    content.appendChild(ts);
+    row.appendChild(avatar);
+    row.appendChild(content);
+
+    chatInner.appendChild(row);
+    enforceMessageLimit();
+
+    return { row, bubble, ts };
+  }
+
+  function closeAgentBubble() {
+    if (!streamBubble) return;
+    streamBubble.classList.remove("streaming");
+
+    // Check fold threshold
+    if (streamBubble.textContent.length > CHUNK_FOLD_KB * 1024) {
+      const fullText = streamBubble.textContent;
+      const preview  = fullText.slice(0, CHUNK_FOLD_KB * 50); // show ~2.5KB preview
+      streamBubble.textContent = preview;
+
+      const fold = document.createElement("button");
+      fold.className = "msg-fold visible";
+      fold.type = "button";
+      fold.setAttribute("aria-expanded", "false");
+      fold.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg> Mostrar más`;
+      fold.addEventListener("click", () => {
+        streamBubble.textContent = fullText;
+        fold.remove();
+        scrollToBottom();
+      });
+      streamBubble.parentNode.insertBefore(fold, streamBubble.nextSibling);
+    }
+
+    streamBubble = null;
+    streamingActive = false;
+    typingIndicator.classList.remove("visible");
+  }
+
+  function addSystemMessage(text) {
+    const row = document.createElement("div");
+    row.className = "msg-row system";
+    row.setAttribute("role", "listitem");
+
+    const bubble = document.createElement("div");
+    bubble.className = "msg-bubble";
+    bubble.textContent = text;
+
+    row.appendChild(bubble);
+    chatInner.appendChild(row);
+    enforceMessageLimit();
+    scrollToBottom(true);
+  }
+
+  /* ────────────────────────────────────────────────────────────────────────
+     PTY output → bubble grouping (timing-based)
+  ──────────────────────────────────────────────────────────────────────── */
+
+  function onPtyOutput(raw) {
+    const text = stripAnsi(raw);
+    if (!text) return;
+
+    detectCwd(raw); // run on raw to catch ANSI-embedded paths
+
+    if (!streamBubble) {
+      // Open a new agent bubble
+      const { bubble, ts } = openAgentBubble();
+      streamBubble = bubble;
+      // Set timestamp ref on closure
+      streamBubble._tsEl = ts;
+    }
+
+    streamBubble.textContent += text;
+
+    // Show typing indicator while streaming
+    if (!streamingActive) {
+      streamingActive = true;
+      typingIndicator.classList.add("visible");
+    }
+
+    scrollToBottom();
+
+    // Reset the close timer on each chunk
+    clearTimeout(streamTimer);
+    streamTimer = setTimeout(() => {
+      if (streamBubble && streamBubble._tsEl) {
+        streamBubble._tsEl.textContent = now();
+        streamBubble._tsEl.setAttribute("aria-label", `Recibido a las ${now()}`);
+      }
+      closeAgentBubble();
+    }, STREAM_TIMEOUT);
+  }
+
+  /* ────────────────────────────────────────────────────────────────────────
+     Send command
+  ──────────────────────────────────────────────────────────────────────── */
+
+  function sendCommand(text) {
+    if (!text.trim()) return;
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      addSystemMessage("No hay conexión al shell. Reconectando…");
+      return;
+    }
+
+    // Close any existing open stream bubble before creating user message
+    clearTimeout(streamTimer);
+    if (streamBubble) closeAgentBubble();
+
+    addUserMessage(text);
+    ws.send(JSON.stringify({ t: "in", d: text + "\n" }));
+
+    // Reset composer
+    composerInput.value = "";
+    autoResize();
+    composerInput.focus();
+
+    // Immediately open a blank agent bubble as placeholder
+    const { bubble, ts } = openAgentBubble();
+    streamBubble = bubble;
+    streamBubble._tsEl = ts;
+  }
+
+  /* ────────────────────────────────────────────────────────────────────────
+     WebSocket
+  ──────────────────────────────────────────────────────────────────────── */
+
+  function connect() {
+    const proto = location.protocol === "https:" ? "wss:" : "ws:";
+    ws = new WebSocket(`${proto}//${location.host}/ws/terminal`);
+
+    ws.onopen = () => {
+      hideOverlay();
+      addSystemMessage("Conectado al shell.");
+      // Send a benign newline to get a prompt drawn
+      ws.send(JSON.stringify({ t: "in", d: "" }));
+    };
+
+    ws.onmessage = (event) => {
+      let msg;
+      try { msg = JSON.parse(event.data); } catch { return; }
+
+      if (msg.t === "out") {
+        onPtyOutput(msg.d);
+      } else if (msg.t === "exit") {
+        closeAgentBubble();
+        addSystemMessage(`Shell terminó (código ${msg.code ?? "?"}).`);
+        showOverlay(`Shell exited (code ${msg.code ?? "?"})`, "Reconnect", () => location.reload());
+      } else if (msg.t === "cwd" && msg.d) {
+        // Some servers emit an explicit cwd message
+        topbarCwd.textContent = msg.d;
+      }
+    };
+
+    ws.onerror = () => {
+      // onclose fires after onerror — handled there
+    };
+
+    ws.onclose = (ev) => {
+      if (intentionalClose) return;
+      if (ev.code === 4401) {
+        location.href = "/login";
+        return;
+      }
+      closeAgentBubble();
+      addSystemMessage("Conexión perdida.");
+      showOverlay("Disconnected", "Reconnect", () => location.reload());
+    };
+  }
+
+  /* ────────────────────────────────────────────────────────────────────────
+     Overlay helpers
+  ──────────────────────────────────────────────────────────────────────── */
+
+  function showOverlay(msg, btnLabel, action) {
+    overlayMsg.textContent = msg;
+    overlayBtn.textContent = btnLabel;
+    overlayBtn.onclick = action ?? (() => location.reload());
+    overlay.classList.add("visible");
+  }
+
+  function hideOverlay() {
+    overlay.classList.remove("visible");
+  }
+
+  /* ────────────────────────────────────────────────────────────────────────
+     Composer events
+  ──────────────────────────────────────────────────────────────────────── */
+
+  composerInput.addEventListener("input", autoResize);
+
+  composerInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey && !e.altKey) {
+      e.preventDefault();
+      const val = composerInput.value.trim();
+      if (val) sendCommand(val);
+    }
+    // Shift+Enter or Alt+Enter → newline (default behavior)
+  });
+
+  btnSend.addEventListener("click", () => {
+    const val = composerInput.value.trim();
+    if (val) sendCommand(val);
+  });
+
+  /* ────────────────────────────────────────────────────────────────────────
+     Quick chips bar
+  ──────────────────────────────────────────────────────────────────────── */
+
+  function parseSeq(raw) {
+    return raw
+      .replace(/\\x([0-9a-fA-F]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)))
+      .replace(/\\t/g, "\t")
+      .replace(/\\r/g, "\r");
+  }
+
+  document.querySelectorAll(".key-chip").forEach((chip) => {
+    // Prevent focus steal from textarea on iOS/desktop
+    chip.addEventListener("mousedown", (e) => e.preventDefault());
+    chip.addEventListener("touchstart", (e) => e.preventDefault(), { passive: false });
+
+    chip.addEventListener("click", (e) => {
+      e.preventDefault();
+
+      if (chip.dataset.seq) {
+        // Raw sequence → PTY directly (no user bubble — it's a control key)
+        const seq = parseSeq(chip.dataset.seq);
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ t: "in", d: seq }));
+        }
+      } else if (chip.dataset.cmd) {
+        // Named command → goes through composer flow
+        sendCommand(chip.dataset.cmd);
+      }
+
+      composerInput.focus();
+    });
+  });
+
+  /* ────────────────────────────────────────────────────────────────────────
+     Empty state suggestion chips
+  ──────────────────────────────────────────────────────────────────────── */
+
+  document.querySelectorAll(".suggestion-chip").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      const cmd = chip.dataset.cmd;
+      if (cmd) sendCommand(cmd);
+      composerInput.focus();
+    });
+  });
+
+  /* ────────────────────────────────────────────────────────────────────────
+     Kill / Logout
+  ──────────────────────────────────────────────────────────────────────── */
+
+  document.getElementById("btn-kill").addEventListener("click", async () => {
+    try {
+      await fetch("/kill", { method: "POST" });
+      addSystemMessage("Proceso terminado (Kill enviado).");
+      // Close current stream bubble — killed process stops emitting
+      clearTimeout(streamTimer);
+      closeAgentBubble();
+    } catch {
+      addSystemMessage("Error al enviar Kill.");
+    }
+  });
+
+  document.getElementById("btn-logout").addEventListener("click", async () => {
+    intentionalClose = true;
+    if (ws) ws.close();
+    try { await fetch("/logout", { method: "POST" }); } catch {}
+    location.href = "/login";
+  });
+
+  /* ────────────────────────────────────────────────────────────────────────
+     Init
+  ──────────────────────────────────────────────────────────────────────── */
+
+  autoResize();
+  connect();
+
+})();
+</script>
+</body>
+</html>

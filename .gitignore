@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+dist/
+build/
+
+# Runtime / local state (contain tokens or user data — never commit)
+**/sessions.json
+**/projects.json
+**/.env
+**/.env.local
+
+# Local tooling / editor
+.DS_Store
+*.log
+.vscode/
+.idea/
+
+# Claude / AI tooling — local permissions only
+.claude/settings.local.json
+
+# OS
+Thumbs.db
