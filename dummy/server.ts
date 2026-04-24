@@ -7,6 +7,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { readFileSync, writeFileSync, existsSync, statSync } from "node:fs";
 import os from "node:os";
+import { resolveBrowsePath, browseDirectory } from "./src/fs-browse.js";
 import mdnsFactory from "multicast-dns";
 
 // ── @lydell/node-pty dynamic import with clear error ────────────────────────
@@ -425,6 +426,32 @@ app.post("/projects/:id/open", async (req, reply) => {
   const quoted = `'${project.path.replace(/'/g, "'\\''")}'`;
   sess.pty.write(`cd ${quoted}\n`);
   return reply.send({ ok: true, path: project.path, name: project.name });
+});
+
+// ── Filesystem browser API ───────────────────────────────────────────────────
+
+// GET /fs/browse?path=<path>&hidden=<0|1>
+app.get("/fs/browse", async (req, reply) => {
+  if (!isAuthenticated(req)) return reply.status(401).send({ ok: false, error: "unauthorized" });
+
+  const query = req.query as { path?: string; hidden?: string };
+  const pathResult = resolveBrowsePath(query.path);
+
+  if (!pathResult.ok) {
+    return reply.status(pathResult.status).send({ ok: false, error: pathResult.error });
+  }
+
+  const includeHidden = query.hidden === "1";
+  const result = await browseDirectory(pathResult.path, includeHidden);
+
+  if (!result.ok) {
+    const isPermission = result.error === "Permiso denegado";
+    const status = isPermission ? 403 : 400;
+    return reply.status(status).send(result);
+  }
+
+  console.log(`[ad] fs/browse — path=${result.path} entries=${result.stats.total}`);
+  return reply.send(result);
 });
 
 // ── mDNS responder: announce `agentdeck.local` on the LAN ────────────────────
