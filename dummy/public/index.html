@@ -27,6 +27,7 @@
       --bg-surface:    #0f101e;
       --bg-elevated:   #141428;
       --bg-hover:      #1a1b32;
+      --bg-card-hover: #1c1d36; /* slightly lighter than bg-hover for cards */
 
       /* Brand accents */
       --violet:        #a78bfa;
@@ -37,6 +38,7 @@
       --cyan:          #22d3ee;
       --rose:          #fb7185;
       --rose-dim:      rgba(251, 113, 133, 0.12);
+      --danger:        #fb7185;
 
       /* Text */
       --text-primary:    #e2e8f0;
@@ -67,6 +69,7 @@
       --topbar-h:    56px;
       --chips-h:     44px;
       --composer-min-h: 60px;
+      --sidebar-w:   280px;
 
       /* Typography */
       --font-sans:  -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
@@ -87,7 +90,6 @@
     /* ── Base ────────────────────────────────────────────────────────────── */
     html {
       height: 100%;
-      /* Prevent overscroll on mobile */
       overscroll-behavior: none;
     }
 
@@ -104,15 +106,56 @@
       -moz-osx-font-smoothing: grayscale;
     }
 
-    /* ── App shell ───────────────────────────────────────────────────────── */
+    /* ── App shell — mobile: column, desktop: sidebar + main ────────────── */
     #app {
       display: flex;
       flex-direction: column;
       height: 100dvh;
-      /* Safe areas for notch/home-indicator */
       padding-top: env(safe-area-inset-top);
       padding-left: env(safe-area-inset-left);
       padding-right: env(safe-area-inset-right);
+    }
+
+    /* Desktop: topbar full-width, then sidebar+chat in a row */
+    @media (min-width: 900px) {
+      #app {
+        display: grid;
+        grid-template-rows: var(--topbar-h) 1fr;
+        grid-template-columns: var(--sidebar-w) 1fr;
+        grid-template-areas:
+          "topbar topbar"
+          "sidebar chat-col";
+      }
+
+      #topbar {
+        grid-area: topbar;
+      }
+
+      #sidebar {
+        grid-area: sidebar;
+        position: sticky;
+        top: 0;
+        /* sidebar fills remaining height below topbar */
+        height: calc(100dvh - var(--topbar-h) - env(safe-area-inset-top));
+      }
+
+      #chat-col {
+        grid-area: chat-col;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      /* Hide hamburger on desktop */
+      #btn-hamburger {
+        display: none !important;
+      }
+
+      /* Hide drawer backdrop on desktop */
+      #drawer-backdrop {
+        display: none !important;
+      }
     }
 
     /* ── Topbar ──────────────────────────────────────────────────────────── */
@@ -125,11 +168,40 @@
       align-items: center;
       padding: 0 var(--s4);
       gap: var(--s3);
-      /* Subtle glassmorphism */
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       position: relative;
-      z-index: 10;
+      z-index: 20;
+    }
+
+    /* Hamburger — only visible on mobile */
+    #btn-hamburger {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--s2);
+      color: var(--text-secondary);
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 150ms var(--ease-out), color 150ms var(--ease-out);
+    }
+
+    #btn-hamburger:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    #btn-hamburger:active {
+      transform: scale(0.95);
+    }
+
+    #btn-hamburger svg {
+      width: 18px;
+      height: 18px;
     }
 
     #topbar-brand {
@@ -159,7 +231,6 @@
       font-size: 15px;
       font-weight: 600;
       line-height: 1.2;
-      /* Gradient text */
       background: var(--grad-brand);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -229,6 +300,415 @@
       color: var(--rose);
     }
 
+    /* ── Sidebar / Drawer ────────────────────────────────────────────────── */
+    #sidebar {
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      /* Mobile: off-canvas drawer */
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: var(--sidebar-w);
+      z-index: 40;
+      transform: translateX(-100%);
+      transition: transform 250ms var(--ease-out);
+      padding-top: env(safe-area-inset-top);
+      padding-left: env(safe-area-inset-left);
+      padding-bottom: env(safe-area-inset-bottom);
+      will-change: transform;
+    }
+
+    #sidebar.open {
+      transform: translateX(0);
+    }
+
+    /* Desktop: sidebar is in-flow (not fixed) */
+    @media (min-width: 900px) {
+      #sidebar {
+        position: sticky; /* overridden by grid area — just remove fixed */
+        transform: none !important;
+        transition: none;
+        /* Reset safe areas — topbar handles top already */
+        padding-top: 0;
+        padding-left: 0;
+        overflow-y: auto;
+      }
+
+      #sidebar.open {
+        transform: none;
+      }
+    }
+
+    /* Drawer backdrop — mobile only */
+    #drawer-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 10, 20, 0.6);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 35;
+      opacity: 0;
+      transition: opacity 250ms var(--ease-out);
+    }
+
+    #drawer-backdrop.visible {
+      display: block;
+      opacity: 1;
+    }
+
+    /* ── Sidebar inner layout ────────────────────────────────────────────── */
+    #sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-y;
+      padding: var(--s4);
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    #sidebar-content::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    #sidebar-content::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: var(--radius-full);
+    }
+
+    /* Section headers */
+    .sidebar-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--s3);
+    }
+
+    .sidebar-section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: 0.01em;
+    }
+
+    /* + button */
+    .btn-add-project {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-tertiary);
+      cursor: pointer;
+      transition: background 150ms var(--ease-out), border-color 150ms var(--ease-out), color 150ms var(--ease-out);
+      flex-shrink: 0;
+    }
+
+    .btn-add-project:hover {
+      background: var(--violet-dim);
+      border-color: rgba(167, 139, 250, 0.35);
+      color: var(--violet);
+    }
+
+    .btn-add-project:focus-visible {
+      outline: 2px solid var(--violet);
+      outline-offset: 2px;
+    }
+
+    .btn-add-project svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Projects list */
+    #projects-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--s2);
+      margin-bottom: var(--s4);
+    }
+
+    /* Project card */
+    .project-card {
+      display: flex;
+      align-items: center;
+      gap: var(--s2);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 12px 10px 12px 14px;
+      cursor: pointer;
+      transition: background 150ms var(--ease-out), border-color 150ms var(--ease-out);
+      text-align: left;
+      width: 100%;
+      min-height: 56px;
+      animation: card-in 200ms var(--ease-out) both;
+    }
+
+    @keyframes card-in {
+      from { opacity: 0; transform: translateX(-6px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    .project-card:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border);
+    }
+
+    .project-card:focus-visible {
+      outline: 2px solid var(--violet);
+      outline-offset: 2px;
+    }
+
+    .project-card-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .project-card-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.3;
+    }
+
+    .project-card-path {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-tertiary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 2px;
+      line-height: 1.3;
+    }
+
+    .project-card-delete {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 150ms var(--ease-out), color 150ms var(--ease-out);
+      /* Prevent card click from firing when deleting */
+      pointer-events: auto;
+    }
+
+    .project-card-delete:hover {
+      background: var(--rose-dim);
+      color: var(--danger);
+    }
+
+    .project-card-delete:focus-visible {
+      outline: 2px solid var(--danger);
+      outline-offset: 2px;
+    }
+
+    .project-card-delete svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* Inline delete confirm */
+    .project-card-confirm {
+      display: none;
+      align-items: center;
+      gap: var(--s2);
+      background: var(--bg-card-hover);
+      border: 1px solid rgba(251, 113, 133, 0.25);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-top: var(--s1);
+      animation: card-in 150ms var(--ease-out) both;
+    }
+
+    .project-card-confirm.visible {
+      display: flex;
+    }
+
+    .project-card-confirm span {
+      flex: 1;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .confirm-btn {
+      font-size: 12px;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      min-height: 28px;
+      transition: opacity 150ms;
+    }
+
+    .confirm-btn.cancel {
+      background: var(--bg-hover);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+
+    .confirm-btn.delete {
+      background: var(--rose-dim);
+      color: var(--danger);
+      border: 1px solid rgba(251, 113, 133, 0.3);
+    }
+
+    .confirm-btn:hover {
+      opacity: 0.8;
+    }
+
+    /* Projects empty state */
+    #projects-empty {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--s3);
+      padding: var(--s8) var(--s4);
+      text-align: center;
+    }
+
+    #projects-empty.visible {
+      display: flex;
+    }
+
+    #projects-empty p {
+      font-size: 13px;
+      color: var(--text-tertiary);
+      line-height: 1.5;
+    }
+
+    #projects-empty-cta {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--violet);
+      background: var(--violet-dim);
+      border: 1px solid rgba(167, 139, 250, 0.25);
+      border-radius: var(--radius-full);
+      padding: var(--s2) var(--s4);
+      cursor: pointer;
+      transition: background 150ms var(--ease-out), border-color 150ms var(--ease-out);
+      min-height: 36px;
+    }
+
+    #projects-empty-cta:hover {
+      background: rgba(167, 139, 250, 0.22);
+      border-color: rgba(167, 139, 250, 0.4);
+    }
+
+    /* Sidebar divider */
+    .sidebar-divider {
+      border: none;
+      border-top: 1px solid var(--border-subtle);
+      margin: var(--s4) 0;
+    }
+
+    /* Action chips — vertical */
+    #action-chips {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: var(--s4);
+    }
+
+    .action-chip {
+      display: flex;
+      align-items: center;
+      gap: var(--s3);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--s2);
+      padding: 10px 12px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      width: 100%;
+      text-align: left;
+      min-height: 44px;
+      transition: background 150ms var(--ease-out), border-color 150ms var(--ease-out), color 150ms var(--ease-out);
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .action-chip:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border);
+      color: var(--text-primary);
+    }
+
+    .action-chip:active {
+      background: var(--violet-dim);
+      color: var(--violet);
+    }
+
+    .action-chip:focus-visible {
+      outline: 2px solid var(--violet);
+      outline-offset: 2px;
+    }
+
+    .action-chip svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+      color: var(--text-tertiary);
+    }
+
+    .action-chip:hover svg,
+    .action-chip:active svg {
+      color: var(--violet);
+    }
+
+    /* Sidebar footer */
+    #sidebar-footer {
+      flex-shrink: 0;
+      padding: var(--s3) var(--s4);
+      border-top: 1px solid var(--border-subtle);
+      text-align: center;
+    }
+
+    #sidebar-footer span {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      font-family: var(--font-mono);
+    }
+
+    /* ── Chat column (desktop: takes remaining space) ────────────────────── */
+    #chat-col {
+      display: contents; /* on mobile: transparent wrapper, children join the flex column */
+    }
+
+    @media (min-width: 900px) {
+      #chat-col {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        overflow: hidden;
+      }
+    }
+
     /* ── Chat area ───────────────────────────────────────────────────────── */
     #chat-scroll {
       flex: 1;
@@ -280,38 +760,34 @@
       line-height: 1.6;
     }
 
-    #empty-suggestions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--s2);
-      justify-content: center;
-      margin-top: var(--s2);
+    #empty-cta-project {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--violet);
+      background: var(--violet-dim);
+      border: 1px solid rgba(167, 139, 250, 0.25);
+      border-radius: var(--radius-full);
+      padding: var(--s2) var(--s5);
+      cursor: pointer;
+      transition: background 150ms var(--ease-out), border-color 150ms var(--ease-out);
+      min-height: 44px;
+      display: none; /* shown via JS when projects list is empty */
     }
 
-    .suggestion-chip {
+    #empty-cta-project.visible {
       display: inline-flex;
       align-items: center;
-      gap: var(--s1);
-      background: var(--bg-elevated);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-full);
-      padding: var(--s2) var(--s4);
-      font-family: var(--font-mono);
-      font-size: 13px;
-      color: var(--violet);
-      cursor: pointer;
-      transition: background 150ms var(--ease-out), border-color 150ms var(--ease-out), transform 150ms var(--ease-out);
-      user-select: none;
-      -webkit-user-select: none;
+      gap: var(--s2);
     }
 
-    .suggestion-chip:hover {
-      background: var(--violet-dim);
-      border-color: rgba(167, 139, 250, 0.3);
+    #empty-cta-project:hover {
+      background: rgba(167, 139, 250, 0.22);
+      border-color: rgba(167, 139, 250, 0.4);
     }
 
-    .suggestion-chip:active {
-      transform: scale(0.96);
+    #empty-cta-project svg {
+      width: 16px;
+      height: 16px;
     }
 
     /* ── Message bubbles ─────────────────────────────────────────────────── */
@@ -319,7 +795,6 @@
       display: flex;
       align-items: flex-end;
       gap: var(--s2);
-      /* Entry animation */
       animation: msg-in 200ms var(--ease-out) both;
     }
 
@@ -334,22 +809,18 @@
       }
     }
 
-    /* User messages — right-aligned */
     .msg-row.user {
       flex-direction: row-reverse;
     }
 
-    /* Agent messages — left-aligned, with avatar */
     .msg-row.agent {
       flex-direction: row;
     }
 
-    /* System messages — centered */
     .msg-row.system {
       justify-content: center;
     }
 
-    /* Avatar for agent */
     .msg-avatar {
       width: 28px;
       height: 28px;
@@ -360,7 +831,6 @@
       opacity: 0.85;
     }
 
-    /* Spacer to align user bubble when there's no avatar */
     .msg-no-avatar {
       width: 28px;
       flex-shrink: 0;
@@ -387,14 +857,12 @@
       position: relative;
     }
 
-    /* User bubble */
     .msg-row.user .msg-bubble {
       background: var(--grad-bubble-user);
       color: var(--text-on-violet);
       border-radius: var(--radius-lg) var(--radius-sm) var(--radius-lg) var(--radius-lg);
     }
 
-    /* Agent bubble */
     .msg-row.agent .msg-bubble {
       background: var(--bg-elevated);
       border: 1px solid var(--border);
@@ -404,7 +872,6 @@
       tab-size: 2;
     }
 
-    /* System bubble */
     .msg-row.system .msg-bubble {
       background: transparent;
       border: 1px solid var(--border-subtle);
@@ -413,9 +880,19 @@
       font-family: var(--font-sans);
       font-size: 12px;
       padding: var(--s1) var(--s4);
+      display: flex;
+      align-items: center;
+      gap: var(--s2);
     }
 
-    /* Streaming indicator inside agent bubble */
+    .msg-row.system .msg-bubble svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+      color: var(--text-tertiary);
+    }
+
+    /* Streaming indicator */
     .msg-bubble.streaming::after {
       content: '';
       display: inline-block;
@@ -595,13 +1072,12 @@
       resize: none;
       color: var(--text-primary);
       font-family: var(--font-mono);
-      font-size: 16px; /* Obligatorio iOS — previene auto-zoom */
+      font-size: 16px;
       line-height: 1.5;
-      max-height: calc(6 * 1.5 * 16px); /* 6 líneas */
+      max-height: calc(6 * 1.5 * 16px);
       overflow-y: auto;
       scrollbar-width: none;
       caret-color: var(--teal);
-      /* Input corrections iOS */
       -webkit-appearance: none;
     }
 
@@ -646,7 +1122,7 @@
       color: #0a0a14;
     }
 
-    /* ── Overlay ─────────────────────────────────────────────────────────── */
+    /* ── Overlay (disconnect) ────────────────────────────────────────────── */
     #overlay {
       display: none;
       position: fixed;
@@ -720,6 +1196,169 @@
     #overlay-btn:hover { opacity: 0.9; }
     #overlay-btn:active { transform: scale(0.97); }
 
+    /* ── Project modal ───────────────────────────────────────────────────── */
+    #project-modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 10, 20, 0.7);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      align-items: center;
+      justify-content: center;
+      z-index: 60;
+      padding: var(--s4);
+    }
+
+    #project-modal-backdrop.visible {
+      display: flex;
+      animation: fade-in 180ms var(--ease-out) both;
+    }
+
+    #project-modal {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--s6);
+      width: 100%;
+      max-width: 420px;
+      animation: modal-in 180ms var(--ease-out) both;
+      position: relative;
+    }
+
+    @keyframes modal-in {
+      from { opacity: 0; transform: scale(0.96); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    #project-modal h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--s5);
+    }
+
+    .modal-field {
+      margin-bottom: var(--s4);
+    }
+
+    .modal-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: var(--s2);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .modal-input {
+      display: block;
+      width: 100%;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--s2);
+      padding: 10px var(--s3);
+      color: var(--text-primary);
+      font-size: 16px; /* prevents iOS zoom */
+      font-family: var(--font-sans);
+      outline: none;
+      transition: border-color 150ms var(--ease-out), box-shadow 150ms var(--ease-out);
+    }
+
+    .modal-input.mono {
+      font-family: var(--font-mono);
+      font-size: 14px;
+    }
+
+    .modal-input:focus {
+      border-color: rgba(167, 139, 250, 0.5);
+      box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.1);
+    }
+
+    .modal-input[aria-invalid="true"] {
+      border-color: var(--danger);
+    }
+
+    .modal-error {
+      font-size: 12px;
+      color: var(--danger);
+      margin-top: var(--s1);
+      min-height: 16px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: var(--s3);
+      justify-content: flex-end;
+      margin-top: var(--s5);
+    }
+
+    .modal-btn-cancel {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--s2);
+      padding: 10px var(--s4);
+      cursor: pointer;
+      min-height: 44px;
+      transition: background 150ms var(--ease-out), color 150ms var(--ease-out);
+    }
+
+    .modal-btn-cancel:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .modal-btn-submit {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-on-violet);
+      background: var(--grad-brand);
+      border: none;
+      border-radius: var(--s2);
+      padding: 10px var(--s5);
+      cursor: pointer;
+      min-height: 44px;
+      transition: opacity 150ms var(--ease-out), transform 150ms var(--ease-out);
+      display: flex;
+      align-items: center;
+      gap: var(--s2);
+    }
+
+    .modal-btn-submit:hover {
+      opacity: 0.9;
+    }
+
+    .modal-btn-submit:active {
+      transform: scale(0.97);
+    }
+
+    .modal-btn-submit:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .modal-spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(10,10,20,0.3);
+      border-top-color: #0a0a14;
+      border-radius: 50%;
+      animation: spin 600ms linear infinite;
+      display: none;
+    }
+
+    .modal-btn-submit.loading .modal-spinner {
+      display: block;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
     /* ── Scrollbar (desktop) ─────────────────────────────────────────────── */
     #chat-scroll::-webkit-scrollbar {
       width: 4px;
@@ -769,6 +1408,31 @@
       }
     }
 
+    /* On desktop with sidebar, override the centering to not double-offset */
+    @media (min-width: 900px) {
+      #chat-inner {
+        max-width: 760px;
+        padding: var(--s8) var(--s6) var(--s6);
+        margin: 0 auto;
+      }
+
+      #typing-indicator {
+        max-width: 760px;
+        padding: 0 var(--s6);
+        margin: 0 auto;
+      }
+
+      #composer-wrap {
+        padding-left: var(--s6);
+        padding-right: var(--s6);
+      }
+
+      #chips-bar {
+        padding-left: var(--s6);
+        padding-right: var(--s6);
+      }
+    }
+
     @media (min-width: 768px) {
       .msg-content {
         max-width: 75%;
@@ -786,6 +1450,22 @@
 
   <!-- ── Topbar ─────────────────────────────────────────────────────────── -->
   <header id="topbar" role="banner">
+    <!-- Hamburger: mobile only, hidden ≥900px via CSS -->
+    <button
+      id="btn-hamburger"
+      type="button"
+      aria-label="Abrir menú"
+      aria-expanded="false"
+      aria-controls="sidebar"
+    >
+      <!-- Lucide: menu -->
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <line x1="4" y1="6" x2="20" y2="6"/>
+        <line x1="4" y1="12" x2="20" y2="12"/>
+        <line x1="4" y1="18" x2="20" y2="18"/>
+      </svg>
+    </button>
+
     <div id="topbar-brand">
       <img id="topbar-avatar" src="/icon-192.png" alt="AgentDeck" />
       <div id="topbar-info">
@@ -795,7 +1475,7 @@
     </div>
     <div id="topbar-actions">
       <button id="btn-kill" class="topbar-btn" aria-label="Matar proceso actual">
-        <!-- Lucide: octagon-x (stop sign with X — clearest kill affordance) -->
+        <!-- Lucide: octagon-x -->
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/>
           <line x1="15" y1="9" x2="9" y2="15"/>
@@ -815,74 +1495,165 @@
     </div>
   </header>
 
-  <!-- ── Chat scroll zone ───────────────────────────────────────────────── -->
-  <main id="chat-scroll" role="main" aria-label="Conversación" aria-live="polite" aria-atomic="false">
-    <div id="chat-inner">
+  <!-- ── Sidebar / Drawer ───────────────────────────────────────────────── -->
+  <nav
+    id="sidebar"
+    aria-label="Proyectos y acciones"
+  >
+    <div id="sidebar-content">
+
+      <!-- Projects section -->
+      <div class="sidebar-section-header">
+        <span class="sidebar-section-title">Proyectos</span>
+        <button
+          class="btn-add-project"
+          type="button"
+          id="btn-open-project-modal"
+          aria-label="Nuevo proyecto"
+        >
+          <!-- Lucide: plus -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </button>
+      </div>
+
+      <div id="projects-list" role="list" aria-label="Lista de proyectos">
+        <!-- Populated by JS -->
+      </div>
 
       <!-- Empty state -->
-      <div id="empty-state" role="status">
-        <img src="/icon-192.png" alt="" aria-hidden="true" />
-        <h2>AgentDeck ready</h2>
-        <p>Tu shell, interfaz chat. Escribí un comando o probá una sugerencia.</p>
-        <div id="empty-suggestions" role="group" aria-label="Comandos sugeridos">
-          <button class="suggestion-chip" data-cmd="ls ~" type="button">ls ~</button>
-          <button class="suggestion-chip" data-cmd="git status" type="button">git status</button>
-          <button class="suggestion-chip" data-cmd='claude --print "hola"' type="button">claude --print</button>
-          <button class="suggestion-chip" data-cmd="pwd" type="button">pwd</button>
-        </div>
+      <div id="projects-empty" role="status" aria-live="polite">
+        <!-- Cat robot avatar reused from topbar -->
+        <img src="/icon-192.png" alt="" aria-hidden="true" width="48" height="48" style="border-radius: 10px; opacity: 0.6;" />
+        <p>Agregá tu primer proyecto</p>
+        <button id="projects-empty-cta" type="button" aria-label="Nuevo proyecto">Nuevo proyecto</button>
+      </div>
+
+      <!-- Divider -->
+      <hr class="sidebar-divider" aria-hidden="true" />
+
+      <!-- Quick actions section -->
+      <div class="sidebar-section-header">
+        <span class="sidebar-section-title">Acciones rápidas</span>
+      </div>
+
+      <div id="action-chips" role="group" aria-label="Acciones rápidas">
+        <button class="action-chip" type="button" data-cmd="ls ~" aria-label="Enviar comando ls ~ al chat">
+          <!-- Lucide: chevron-right -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+          ls ~
+        </button>
+        <button class="action-chip" type="button" data-cmd="git status" aria-label="Enviar comando git status al chat">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+          git status
+        </button>
+        <button class="action-chip" type="button" data-cmd='claude --print "hola"' aria-label="Enviar comando claude --print al chat">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+          claude --print "hola"
+        </button>
+        <button class="action-chip" type="button" data-cmd="codex --help" aria-label="Enviar comando codex --help al chat">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+          codex --help
+        </button>
+        <button class="action-chip" type="button" data-cmd="pwd" aria-label="Enviar comando pwd al chat">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+          pwd
+        </button>
       </div>
 
     </div>
-  </main>
 
-  <!-- Typing indicator (outside chat-inner, appended before composer) -->
-  <div id="typing-indicator" role="status" aria-label="El agente está procesando">
-    <img class="typing-avatar" src="/icon-192.png" alt="" aria-hidden="true" />
-    <div class="typing-dots" aria-hidden="true">
-      <div class="typing-dot"></div>
-      <div class="typing-dot"></div>
-      <div class="typing-dot"></div>
+    <!-- Sidebar footer -->
+    <div id="sidebar-footer">
+      <span>AgentDeck dummy v0.1</span>
     </div>
-  </div>
+  </nav>
 
-  <!-- ── Quick chips bar ────────────────────────────────────────────────── -->
-  <div id="chips-bar" role="toolbar" aria-label="Teclas rápidas">
-    <button class="key-chip" data-seq="\x1b"     type="button" aria-label="Escape">Esc</button>
-    <button class="key-chip" data-seq="\t"        type="button" aria-label="Tab">Tab</button>
-    <button class="key-chip" data-seq="\x03"      type="button" aria-label="Control C">Ctrl+C</button>
-    <button class="key-chip" data-seq="\x04"      type="button" aria-label="Control D">Ctrl+D</button>
-    <button class="key-chip" data-seq="\x0c"      type="button" aria-label="Control L">Ctrl+L</button>
-    <button class="key-chip" data-seq="\x1b[A"    type="button" aria-label="Flecha arriba">&#8593;</button>
-    <button class="key-chip" data-seq="\x1b[B"    type="button" aria-label="Flecha abajo">&#8595;</button>
-    <button class="key-chip" data-cmd="clear"     type="button" aria-label="Limpiar terminal">clear</button>
-  </div>
+  <!-- Drawer backdrop (mobile only) -->
+  <div
+    id="drawer-backdrop"
+    role="presentation"
+    aria-hidden="true"
+  ></div>
 
-  <!-- ── Composer ───────────────────────────────────────────────────────── -->
-  <section id="composer-wrap" aria-label="Compositor de comandos">
-    <div id="composer">
-      <textarea
-        id="composer-input"
-        rows="1"
-        placeholder="Escribí un comando…"
-        autocapitalize="none"
-        autocorrect="off"
-        spellcheck="false"
-        autocomplete="off"
-        inputmode="text"
-        aria-label="Comando"
-        aria-multiline="true"
-      ></textarea>
-      <button id="btn-send" type="button" disabled aria-label="Enviar comando">
-        <!-- Lucide: arrow-up -->
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <line x1="12" y1="19" x2="12" y2="5"/>
-          <polyline points="5 12 12 5 19 12"/>
-        </svg>
-      </button>
+  <!-- ── Chat column ────────────────────────────────────────────────────── -->
+  <div id="chat-col">
+
+    <!-- Chat scroll zone -->
+    <main id="chat-scroll" role="main" aria-label="Conversación" aria-live="polite" aria-atomic="false">
+      <div id="chat-inner">
+
+        <!-- Empty state -->
+        <div id="empty-state" role="status">
+          <img src="/icon-192.png" alt="" aria-hidden="true" />
+          <h2>Tu agent deck local</h2>
+          <p>Abrí un proyecto del menú o escribí un comando…</p>
+          <button id="empty-cta-project" type="button" aria-label="Agregar primer proyecto">
+            <!-- Lucide: folder-plus -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+              <line x1="12" y1="11" x2="12" y2="17"/>
+              <line x1="9" y1="14" x2="15" y2="14"/>
+            </svg>
+            Nuevo proyecto
+          </button>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Typing indicator -->
+    <div id="typing-indicator" role="status" aria-label="El agente está procesando">
+      <img class="typing-avatar" src="/icon-192.png" alt="" aria-hidden="true" />
+      <div class="typing-dots" aria-hidden="true">
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+      </div>
     </div>
-  </section>
 
-</div>
+    <!-- Quick chips bar -->
+    <div id="chips-bar" role="toolbar" aria-label="Teclas rápidas">
+      <button class="key-chip" data-seq="\x1b"     type="button" aria-label="Escape">Esc</button>
+      <button class="key-chip" data-seq="\t"        type="button" aria-label="Tab">Tab</button>
+      <button class="key-chip" data-seq="\x03"      type="button" aria-label="Control C">Ctrl+C</button>
+      <button class="key-chip" data-seq="\x04"      type="button" aria-label="Control D">Ctrl+D</button>
+      <button class="key-chip" data-seq="\x0c"      type="button" aria-label="Control L">Ctrl+L</button>
+      <button class="key-chip" data-seq="\x1b[A"    type="button" aria-label="Flecha arriba">&#8593;</button>
+      <button class="key-chip" data-seq="\x1b[B"    type="button" aria-label="Flecha abajo">&#8595;</button>
+      <button class="key-chip" data-cmd="clear"     type="button" aria-label="Limpiar terminal">clear</button>
+    </div>
+
+    <!-- Composer -->
+    <section id="composer-wrap" aria-label="Compositor de comandos">
+      <div id="composer">
+        <textarea
+          id="composer-input"
+          rows="1"
+          placeholder="Escribí un comando…"
+          autocapitalize="none"
+          autocorrect="off"
+          spellcheck="false"
+          autocomplete="off"
+          inputmode="text"
+          aria-label="Comando"
+          aria-multiline="true"
+        ></textarea>
+        <button id="btn-send" type="button" disabled aria-label="Enviar comando">
+          <!-- Lucide: arrow-up -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="12" y1="19" x2="12" y2="5"/>
+            <polyline points="5 12 12 5 19 12"/>
+          </svg>
+        </button>
+      </div>
+    </section>
+
+  </div><!-- /#chat-col -->
+
+</div><!-- /#app -->
 
 <!-- ── Disconnect overlay ─────────────────────────────────────────────── -->
 <div id="overlay" role="alertdialog" aria-modal="true" aria-labelledby="overlay-msg">
@@ -893,6 +1664,57 @@
   </div>
 </div>
 
+<!-- ── Project modal ──────────────────────────────────────────────────── -->
+<div
+  id="project-modal-backdrop"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="modal-heading"
+>
+  <div id="project-modal">
+    <h3 id="modal-heading">Nuevo proyecto</h3>
+
+    <div class="modal-field">
+      <label class="modal-label" for="modal-name">Nombre</label>
+      <input
+        id="modal-name"
+        class="modal-input"
+        type="text"
+        autocapitalize="none"
+        autocorrect="off"
+        spellcheck="false"
+        autocomplete="off"
+        placeholder="mi-proyecto"
+      />
+      <div class="modal-error" id="modal-name-error" role="alert" aria-live="polite"></div>
+    </div>
+
+    <div class="modal-field">
+      <label class="modal-label" for="modal-path">Ruta</label>
+      <input
+        id="modal-path"
+        class="modal-input mono"
+        type="text"
+        autocapitalize="none"
+        autocorrect="off"
+        spellcheck="false"
+        autocomplete="off"
+        placeholder="~/code/miproyecto"
+        inputmode="url"
+      />
+      <div class="modal-error" id="modal-path-error" role="alert" aria-live="polite"></div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="modal-btn-cancel" type="button" id="modal-btn-cancel">Cancelar</button>
+      <button class="modal-btn-submit" type="button" id="modal-btn-submit">
+        <div class="modal-spinner" aria-hidden="true"></div>
+        Agregar
+      </button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function () {
   "use strict";
@@ -900,68 +1722,83 @@
   /* ────────────────────────────────────────────────────────────────────────
      Constants & state
   ──────────────────────────────────────────────────────────────────────── */
-  const MAX_MESSAGES   = 200;   // DOM messages limit
-  const CHUNK_FOLD_KB  = 50;    // bytes — fold bubble if larger
-  const STREAM_TIMEOUT = 700;   // ms — close bubble after silence
+  const MAX_MESSAGES   = 200;
+  const CHUNK_FOLD_KB  = 50;
+  const STREAM_TIMEOUT = 700;
 
   let ws              = null;
   let intentionalClose = false;
-  let streamBubble    = null;   // Current open agent bubble element
-  let streamTimer     = null;   // setTimeout handle for closing stream
-  let streamingActive = false;  // Whether PTY is mid-output
-  let userScrolled    = false;  // True if user manually scrolled up
+  let streamBubble    = null;
+  let streamTimer     = null;
+  let streamingActive = false;
+  let userScrolled    = false;
+
+  // Projects state
+  let projects        = [];       // [{id, name, path, createdAt}]
+  let drawerOpen      = false;
+
+  // Touch tracking for swipe-to-close
+  let touchStartX     = 0;
+  let touchStartY     = 0;
 
   /* ────────────────────────────────────────────────────────────────────────
      DOM refs
   ──────────────────────────────────────────────────────────────────────── */
-  const chatScroll     = document.getElementById("chat-scroll");
-  const chatInner      = document.getElementById("chat-inner");
-  const emptyState     = document.getElementById("empty-state");
-  const typingIndicator = document.getElementById("typing-indicator");
-  const composerInput  = document.getElementById("composer-input");
-  const btnSend        = document.getElementById("btn-send");
-  const overlay        = document.getElementById("overlay");
-  const overlayMsg     = document.getElementById("overlay-msg");
-  const overlayBtn     = document.getElementById("overlay-btn");
-  const topbarCwd      = document.getElementById("topbar-cwd");
+  const chatScroll       = document.getElementById("chat-scroll");
+  const chatInner        = document.getElementById("chat-inner");
+  const emptyState       = document.getElementById("empty-state");
+  const typingIndicator  = document.getElementById("typing-indicator");
+  const composerInput    = document.getElementById("composer-input");
+  const btnSend          = document.getElementById("btn-send");
+  const overlay          = document.getElementById("overlay");
+  const overlayMsg       = document.getElementById("overlay-msg");
+  const overlayBtn       = document.getElementById("overlay-btn");
+  const topbarCwd        = document.getElementById("topbar-cwd");
+
+  // Drawer
+  const sidebar          = document.getElementById("sidebar");
+  const drawerBackdrop   = document.getElementById("drawer-backdrop");
+  const btnHamburger     = document.getElementById("btn-hamburger");
+
+  // Projects UI
+  const projectsList     = document.getElementById("projects-list");
+  const projectsEmpty    = document.getElementById("projects-empty");
+  const projectsEmptyCta = document.getElementById("projects-empty-cta");
+  const emptyChatCta     = document.getElementById("empty-cta-project");
+
+  // Modal
+  const modalBackdrop    = document.getElementById("project-modal-backdrop");
+  const modalNameInput   = document.getElementById("modal-name");
+  const modalPathInput   = document.getElementById("modal-path");
+  const modalNameError   = document.getElementById("modal-name-error");
+  const modalPathError   = document.getElementById("modal-path-error");
+  const modalBtnCancel   = document.getElementById("modal-btn-cancel");
+  const modalBtnSubmit   = document.getElementById("modal-btn-submit");
+  const btnOpenModal     = document.getElementById("btn-open-project-modal");
 
   /* ────────────────────────────────────────────────────────────────────────
      Utilities
   ──────────────────────────────────────────────────────────────────────── */
 
-  /** Format hh:mm timestamp */
   function now() {
     const d = new Date();
     return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
   }
 
-  /** Strip ANSI escape sequences from terminal output */
   function stripAnsi(str) {
     return str
-      // CSI sequences — colors, cursor, modes. Covers ESC[?2004h,
-      // ESC[30m, ESC[1;31m, ESC[K, ESC[>0c etc. The `[?!>` branch
-      // captures private/DEC-flavored CSI sequences that zsh emits
-      // (like bracketed paste ?2004h) which the previous regex missed.
       .replace(/\x1b\[[\?\!\>]?[0-9;:]*[A-Za-z@~]/g, "")
-      // OSC sequences — titles, hyperlinks. ESC ] ... BEL or ESC ] ... ESC \
       .replace(/\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)/g, "")
-      // Single-char ESC sequences: ESC followed by one uppercase or symbol
       .replace(/\x1b[@-Z\\-_]/g, "")
-      // Charset designators: ESC ( A, ESC ) B, ESC # 8
       .replace(/\x1b[()#%][0-9A-Za-z]/g, "")
-      // Carriage returns not followed by newline (overwrite trick)
       .replace(/\r(?!\n)/g, "")
-      // Null, BEL, backspace
       .replace(/[\x00\x07\x08]/g, "");
   }
 
-  /** Detect CWD update from prompt patterns like "user@host:/path$ " */
   function detectCwd(text) {
-    // Common shell prompt patterns: path before $, >, % markers
     const m = text.match(/(?:^|\n|\r)[^\r\n]*?([~\/][^\r\n$#%>]*)[#$%>]\s*$/m);
     if (m) {
       let path = m[1].trim();
-      // Simplify /Users/xxx → ~
       if (path.startsWith("/Users/") || path.startsWith("/home/")) {
         path = "~" + path.replace(/^\/[^/]+\/[^/]+/, "");
       }
@@ -969,42 +1806,138 @@
     }
   }
 
-  /** Auto-resize textarea height */
   function autoResize() {
     composerInput.style.height = "auto";
-    const lineH = 16 * 1.5; // font-size * line-height
+    const lineH = 16 * 1.5;
     const max   = lineH * 6;
     composerInput.style.height = Math.min(composerInput.scrollHeight, max) + "px";
     btnSend.disabled = composerInput.value.trim() === "";
   }
 
-  /** Scroll to bottom if user hasn't manually scrolled up */
   function scrollToBottom(force = false) {
     if (force || !userScrolled) {
       chatScroll.scrollTo({ top: chatScroll.scrollHeight, behavior: "smooth" });
     }
   }
 
-  /** Track manual scroll */
   chatScroll.addEventListener("scroll", () => {
     const distanceFromBottom = chatScroll.scrollHeight - chatScroll.scrollTop - chatScroll.clientHeight;
     userScrolled = distanceFromBottom > 80;
   }, { passive: true });
 
-  /** Hide empty state once there's content */
   function maybeHideEmpty() {
     if (emptyState && emptyState.parentNode === chatInner) {
       chatInner.removeChild(emptyState);
     }
   }
 
-  /** Enforce DOM message count limit — remove oldest rows */
   function enforceMessageLimit() {
     const rows = chatInner.querySelectorAll(".msg-row");
     const excess = rows.length - MAX_MESSAGES;
     for (let i = 0; i < excess; i++) {
       rows[i].remove();
     }
+  }
+
+  /* ────────────────────────────────────────────────────────────────────────
+     Focus trap utility
+  ──────────────────────────────────────────────────────────────────────── */
+
+  function getFocusable(container) {
+    return Array.from(container.querySelectorAll(
+      'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    )).filter(el => !el.closest('[hidden]') && el.offsetParent !== null);
+  }
+
+  function trapFocus(container, e) {
+    const focusable = getFocusable(container);
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last  = focusable[focusable.length - 1];
+    if (e.shiftKey) {
+      if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+    } else {
+      if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  }
+
+  /* ────────────────────────────────────────────────────────────────────────
+     Drawer
+  ──────────────────────────────────────────────────────────────────────── */
+
+  function openDrawer() {
+    drawerOpen = true;
+    sidebar.classList.add("open");
+    drawerBackdrop.classList.add("visible");
+    btnHamburger.setAttribute("aria-expanded", "true");
+    if (!isDesktop()) {
+      sidebar.setAttribute("role", "dialog");
+      sidebar.setAttribute("aria-modal", "true");
+    }
+    // Focus first focusable in sidebar
+    const focusable = getFocusable(sidebar);
+    if (focusable.length) focusable[0].focus();
+  }
+
+  function closeDrawer() {
+    drawerOpen = false;
+    sidebar.classList.remove("open");
+    drawerBackdrop.classList.remove("visible");
+    btnHamburger.setAttribute("aria-expanded", "false");
+    sidebar.removeAttribute("role");
+    sidebar.removeAttribute("aria-modal");
+    btnHamburger.focus();
+  }
+
+  function isDesktop() {
+    return window.matchMedia("(min-width: 900px)").matches;
+  }
+
+  btnHamburger.addEventListener("click", () => {
+    if (drawerOpen) { closeDrawer(); } else { openDrawer(); }
+  });
+
+  drawerBackdrop.addEventListener("click", closeDrawer);
+
+  // Esc closes drawer/modal
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      if (modalBackdrop.classList.contains("visible")) {
+        closeModal();
+        return;
+      }
+      if (drawerOpen && !isDesktop()) {
+        closeDrawer();
+      }
+    }
+    // Focus trap for drawer on mobile
+    if (e.key === "Tab" && drawerOpen && !isDesktop()) {
+      trapFocus(sidebar, e);
+    }
+    // Focus trap for modal
+    if (e.key === "Tab" && modalBackdrop.classList.contains("visible")) {
+      trapFocus(modalBackdrop, e);
+    }
+  });
+
+  // Swipe-to-close: detect left swipe on the sidebar
+  sidebar.addEventListener("touchstart", (e) => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+
+  sidebar.addEventListener("touchend", (e) => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
+    // Swipe left ≥80px and mostly horizontal
+    if (dx < -80 && dy < 60 && drawerOpen && !isDesktop()) {
+      closeDrawer();
+    }
+  }, { passive: true });
+
+  // Close drawer on mobile after project open (called later)
+  function closeMobileDrawer() {
+    if (!isDesktop() && drawerOpen) closeDrawer();
   }
 
   /* ────────────────────────────────────────────────────────────────────────
@@ -1076,10 +2009,9 @@
     if (!streamBubble) return;
     streamBubble.classList.remove("streaming");
 
-    // Check fold threshold
     if (streamBubble.textContent.length > CHUNK_FOLD_KB * 1024) {
       const fullText = streamBubble.textContent;
-      const preview  = fullText.slice(0, CHUNK_FOLD_KB * 50); // show ~2.5KB preview
+      const preview  = fullText.slice(0, CHUNK_FOLD_KB * 50);
       streamBubble.textContent = preview;
 
       const fold = document.createElement("button");
@@ -1100,14 +2032,23 @@
     typingIndicator.classList.remove("visible");
   }
 
-  function addSystemMessage(text) {
+  function addSystemMessage(text, iconSvg) {
     const row = document.createElement("div");
     row.className = "msg-row system";
     row.setAttribute("role", "listitem");
 
     const bubble = document.createElement("div");
     bubble.className = "msg-bubble";
-    bubble.textContent = text;
+
+    if (iconSvg) {
+      const iconWrapper = document.createElement("span");
+      iconWrapper.setAttribute("aria-hidden", "true");
+      iconWrapper.innerHTML = iconSvg;
+      bubble.appendChild(iconWrapper);
+    }
+
+    const textNode = document.createTextNode(text);
+    bubble.appendChild(textNode);
 
     row.appendChild(bubble);
     chatInner.appendChild(row);
@@ -1116,26 +2057,23 @@
   }
 
   /* ────────────────────────────────────────────────────────────────────────
-     PTY output → bubble grouping (timing-based)
+     PTY output
   ──────────────────────────────────────────────────────────────────────── */
 
   function onPtyOutput(raw) {
     const text = stripAnsi(raw);
     if (!text) return;
 
-    detectCwd(raw); // run on raw to catch ANSI-embedded paths
+    detectCwd(raw);
 
     if (!streamBubble) {
-      // Open a new agent bubble
       const { bubble, ts } = openAgentBubble();
       streamBubble = bubble;
-      // Set timestamp ref on closure
       streamBubble._tsEl = ts;
     }
 
     streamBubble.textContent += text;
 
-    // Show typing indicator while streaming
     if (!streamingActive) {
       streamingActive = true;
       typingIndicator.classList.add("visible");
@@ -1143,7 +2081,6 @@
 
     scrollToBottom();
 
-    // Reset the close timer on each chunk
     clearTimeout(streamTimer);
     streamTimer = setTimeout(() => {
       if (streamBubble && streamBubble._tsEl) {
@@ -1165,19 +2102,16 @@
       return;
     }
 
-    // Close any existing open stream bubble before creating user message
     clearTimeout(streamTimer);
     if (streamBubble) closeAgentBubble();
 
     addUserMessage(text);
     ws.send(JSON.stringify({ t: "in", d: text + "\n" }));
 
-    // Reset composer
     composerInput.value = "";
     autoResize();
     composerInput.focus();
 
-    // Immediately open a blank agent bubble as placeholder
     const { bubble, ts } = openAgentBubble();
     streamBubble = bubble;
     streamBubble._tsEl = ts;
@@ -1194,7 +2128,6 @@
     ws.onopen = () => {
       hideOverlay();
       addSystemMessage("Conectado al shell.");
-      // Send a benign newline to get a prompt drawn
       ws.send(JSON.stringify({ t: "in", d: "" }));
     };
 
@@ -1209,14 +2142,11 @@
         addSystemMessage(`Shell terminó (código ${msg.code ?? "?"}).`);
         showOverlay(`Shell exited (code ${msg.code ?? "?"})`, "Reconnect", () => location.reload());
       } else if (msg.t === "cwd" && msg.d) {
-        // Some servers emit an explicit cwd message
         topbarCwd.textContent = msg.d;
       }
     };
 
-    ws.onerror = () => {
-      // onclose fires after onerror — handled there
-    };
+    ws.onerror = () => {};
 
     ws.onclose = (ev) => {
       if (intentionalClose) return;
@@ -1246,6 +2176,267 @@
   }
 
   /* ────────────────────────────────────────────────────────────────────────
+     Projects — API
+  ──────────────────────────────────────────────────────────────────────── */
+
+  async function fetchProjects() {
+    try {
+      const res = await fetch("/projects", { credentials: "include" });
+      if (!res.ok) return;
+      const data = await res.json();
+      projects = data.items || [];
+      renderProjects();
+    } catch {}
+  }
+
+  async function createProject(name, path) {
+    const res = await fetch("/projects", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, path }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || err.message || `Error ${res.status}`);
+    }
+    return res.json();
+  }
+
+  async function deleteProject(id) {
+    const res = await fetch(`/projects/${id}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    if (!res.ok) throw new Error(`Error ${res.status}`);
+  }
+
+  async function openProject(id) {
+    const res = await fetch(`/projects/${id}/open`, {
+      method: "POST",
+      credentials: "include",
+    });
+    if (!res.ok) throw new Error(`Error ${res.status}`);
+    return res.json();
+  }
+
+  /* ────────────────────────────────────────────────────────────────────────
+     Projects — render
+  ──────────────────────────────────────────────────────────────────────── */
+
+  function renderProjects() {
+    // Clear existing cards (not the empty-state div)
+    projectsList.innerHTML = "";
+
+    if (projects.length === 0) {
+      projectsEmpty.classList.add("visible");
+      // Show CTA in chat empty state too
+      if (emptyChatCta) emptyChatCta.classList.add("visible");
+      return;
+    }
+
+    projectsEmpty.classList.remove("visible");
+    if (emptyChatCta) emptyChatCta.classList.remove("visible");
+
+    projects.forEach((proj, idx) => {
+      const wrapper = document.createElement("div");
+      wrapper.style.animationDelay = `${idx * 30}ms`;
+
+      const card = document.createElement("button");
+      card.className = "project-card";
+      card.type = "button";
+      card.setAttribute("role", "listitem");
+      card.setAttribute("aria-label", `Abrir proyecto ${proj.name}`);
+      card.dataset.projectId = proj.id;
+
+      const body = document.createElement("div");
+      body.className = "project-card-body";
+
+      const nameEl = document.createElement("div");
+      nameEl.className = "project-card-name";
+      nameEl.textContent = proj.name;
+
+      const pathEl = document.createElement("div");
+      pathEl.className = "project-card-path";
+      pathEl.textContent = proj.path;
+      pathEl.title = proj.path;
+
+      body.appendChild(nameEl);
+      body.appendChild(pathEl);
+
+      const delBtn = document.createElement("button");
+      delBtn.type = "button";
+      delBtn.className = "project-card-delete";
+      delBtn.setAttribute("aria-label", `Eliminar proyecto ${proj.name}`);
+      delBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+
+      card.appendChild(body);
+      card.appendChild(delBtn);
+      wrapper.appendChild(card);
+
+      // Inline confirm row
+      const confirmRow = document.createElement("div");
+      confirmRow.className = "project-card-confirm";
+      confirmRow.setAttribute("role", "group");
+      confirmRow.setAttribute("aria-label", `Confirmar eliminación de ${proj.name}`);
+
+      const confirmMsg = document.createElement("span");
+      confirmMsg.textContent = `¿Eliminar "${proj.name}"?`;
+
+      const cancelBtn = document.createElement("button");
+      cancelBtn.type = "button";
+      cancelBtn.className = "confirm-btn cancel";
+      cancelBtn.textContent = "No";
+      cancelBtn.setAttribute("aria-label", "Cancelar eliminación");
+
+      const doDeleteBtn = document.createElement("button");
+      doDeleteBtn.type = "button";
+      doDeleteBtn.className = "confirm-btn delete";
+      doDeleteBtn.textContent = "Eliminar";
+      doDeleteBtn.setAttribute("aria-label", `Confirmar eliminación de ${proj.name}`);
+
+      confirmRow.appendChild(confirmMsg);
+      confirmRow.appendChild(cancelBtn);
+      confirmRow.appendChild(doDeleteBtn);
+      wrapper.appendChild(confirmRow);
+      projectsList.appendChild(wrapper);
+
+      // Events
+      // Open project on card click (not on delete button)
+      card.addEventListener("click", async (e) => {
+        if (e.target === delBtn || delBtn.contains(e.target)) return;
+        try {
+          const data = await openProject(proj.id);
+          if (data && data.needsSession) {
+            addSystemMessage("Abrí una sesión escribiendo un comando primero.");
+          } else {
+            // Lucide folder-open icon inline
+            const folderIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;flex-shrink:0;" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><polyline points="2 10 22 10"/></svg>`;
+            addSystemMessage(`Abierto: ${proj.name}`, folderIcon);
+            closeMobileDrawer();
+          }
+        } catch {
+          addSystemMessage(`Error al abrir ${proj.name}.`);
+        }
+      });
+
+      // Delete button shows confirm row
+      delBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        confirmRow.classList.add("visible");
+        cancelBtn.focus();
+      });
+
+      cancelBtn.addEventListener("click", () => {
+        confirmRow.classList.remove("visible");
+        delBtn.focus();
+      });
+
+      doDeleteBtn.addEventListener("click", async () => {
+        try {
+          await deleteProject(proj.id);
+          projects = projects.filter(p => p.id !== proj.id);
+          wrapper.remove();
+          if (projects.length === 0) {
+            projectsEmpty.classList.add("visible");
+            if (emptyChatCta) emptyChatCta.classList.add("visible");
+          }
+        } catch {
+          addSystemMessage(`Error al eliminar ${proj.name}.`);
+          confirmRow.classList.remove("visible");
+        }
+      });
+    });
+  }
+
+  /* ────────────────────────────────────────────────────────────────────────
+     Project modal
+  ──────────────────────────────────────────────────────────────────────── */
+
+  let previousFocus = null;
+
+  function openModal() {
+    previousFocus = document.activeElement;
+    modalNameInput.value = "";
+    modalPathInput.value = "";
+    clearModalErrors();
+    modalBackdrop.classList.add("visible");
+    modalNameInput.focus();
+  }
+
+  function closeModal() {
+    modalBackdrop.classList.remove("visible");
+    modalBtnSubmit.classList.remove("loading");
+    modalBtnSubmit.disabled = false;
+    clearModalErrors();
+    if (previousFocus) previousFocus.focus();
+  }
+
+  function clearModalErrors() {
+    modalNameError.textContent = "";
+    modalPathError.textContent = "";
+    modalNameInput.removeAttribute("aria-invalid");
+    modalPathInput.removeAttribute("aria-invalid");
+  }
+
+  function setModalError(inputEl, errorEl, msg) {
+    inputEl.setAttribute("aria-invalid", "true");
+    errorEl.textContent = msg;
+  }
+
+  btnOpenModal.addEventListener("click", openModal);
+  projectsEmptyCta.addEventListener("click", openModal);
+  if (emptyChatCta) emptyChatCta.addEventListener("click", openModal);
+
+  modalBtnCancel.addEventListener("click", closeModal);
+
+  // Click outside modal card
+  modalBackdrop.addEventListener("click", (e) => {
+    if (e.target === modalBackdrop) closeModal();
+  });
+
+  modalBtnSubmit.addEventListener("click", async () => {
+    clearModalErrors();
+    const name = modalNameInput.value.trim();
+    const path = modalPathInput.value.trim();
+    let valid = true;
+
+    if (!name) {
+      setModalError(modalNameInput, modalNameError, "El nombre es requerido.");
+      valid = false;
+    }
+    if (!path) {
+      setModalError(modalPathInput, modalPathError, "La ruta es requerida.");
+      valid = false;
+    }
+    if (!valid) return;
+
+    modalBtnSubmit.classList.add("loading");
+    modalBtnSubmit.disabled = true;
+
+    try {
+      const proj = await createProject(name, path);
+      projects.push(proj);
+      renderProjects();
+      closeModal();
+    } catch (err) {
+      // Show error on path field (most likely invalid path)
+      setModalError(modalPathInput, modalPathError, err.message || "Error al crear el proyecto.");
+      modalBtnSubmit.classList.remove("loading");
+      modalBtnSubmit.disabled = false;
+      modalPathInput.focus();
+    }
+  });
+
+  // Submit on Enter in name field
+  modalNameInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); modalPathInput.focus(); }
+  });
+  modalPathInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); modalBtnSubmit.click(); }
+  });
+
+  /* ────────────────────────────────────────────────────────────────────────
      Composer events
   ──────────────────────────────────────────────────────────────────────── */
 
@@ -1257,7 +2448,6 @@
       const val = composerInput.value.trim();
       if (val) sendCommand(val);
     }
-    // Shift+Enter or Alt+Enter → newline (default behavior)
   });
 
   btnSend.addEventListener("click", () => {
@@ -1266,7 +2456,7 @@
   });
 
   /* ────────────────────────────────────────────────────────────────────────
-     Quick chips bar
+     Quick chips bar (key chips — existing behavior preserved)
   ──────────────────────────────────────────────────────────────────────── */
 
   function parseSeq(raw) {
@@ -1277,7 +2467,6 @@
   }
 
   document.querySelectorAll(".key-chip").forEach((chip) => {
-    // Prevent focus steal from textarea on iOS/desktop
     chip.addEventListener("mousedown", (e) => e.preventDefault());
     chip.addEventListener("touchstart", (e) => e.preventDefault(), { passive: false });
 
@@ -1285,13 +2474,11 @@
       e.preventDefault();
 
       if (chip.dataset.seq) {
-        // Raw sequence → PTY directly (no user bubble — it's a control key)
         const seq = parseSeq(chip.dataset.seq);
         if (ws && ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ t: "in", d: seq }));
         }
       } else if (chip.dataset.cmd) {
-        // Named command → goes through composer flow
         sendCommand(chip.dataset.cmd);
       }
 
@@ -1300,13 +2487,21 @@
   });
 
   /* ────────────────────────────────────────────────────────────────────────
-     Empty state suggestion chips
+     Action chips (drawer) — reuse sendCommand + closeMobileDrawer
   ──────────────────────────────────────────────────────────────────────── */
 
-  document.querySelectorAll(".suggestion-chip").forEach((chip) => {
-    chip.addEventListener("click", () => {
+  document.querySelectorAll(".action-chip").forEach((chip) => {
+    // Same pattern as key-chips: prevent focus steal from textarea
+    chip.addEventListener("mousedown", (e) => e.preventDefault());
+    chip.addEventListener("touchstart", (e) => e.preventDefault(), { passive: false });
+
+    chip.addEventListener("click", (e) => {
+      e.preventDefault();
       const cmd = chip.dataset.cmd;
-      if (cmd) sendCommand(cmd);
+      if (cmd) {
+        sendCommand(cmd);
+        closeMobileDrawer();
+      }
       composerInput.focus();
     });
   });
@@ -1319,7 +2514,6 @@
     try {
       await fetch("/kill", { method: "POST" });
       addSystemMessage("Proceso terminado (Kill enviado).");
-      // Close current stream bubble — killed process stops emitting
       clearTimeout(streamTimer);
       closeAgentBubble();
     } catch {
@@ -1340,6 +2534,7 @@
 
   autoResize();
   connect();
+  fetchProjects();
 
 })();
 </script>
