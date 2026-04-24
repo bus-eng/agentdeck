@@ -94,7 +94,7 @@
     }
 
     body {
-      height: 100dvh;
+      height: 100%;
       width: 100%;
       overflow: hidden;
       background: var(--bg-base);
@@ -110,7 +110,7 @@
     #app {
       display: flex;
       flex-direction: column;
-      height: 100dvh;
+      height: var(--vv-h, 100dvh);
       padding-top: env(safe-area-inset-top);
       padding-left: env(safe-area-inset-left);
       padding-right: env(safe-area-inset-right);
@@ -2527,6 +2527,25 @@
     try { await fetch("/logout", { method: "POST" }); } catch {}
     location.href = "/login";
   });
+
+  /* ────────────────────────────────────────────────────────────────────────
+     VisualViewport — iOS PWA keyboard resize fix
+     Updates --vv-h so #app shrinks when the software keyboard opens,
+     keeping the composer and chips-bar above the keyboard at all times.
+  ──────────────────────────────────────────────────────────────────────── */
+
+  function applyVV() {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const h = Math.round(vv.height + vv.offsetTop);
+    document.documentElement.style.setProperty("--vv-h", h + "px");
+  }
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", applyVV);
+    window.visualViewport.addEventListener("scroll", applyVV);
+    applyVV();
+  }
 
   /* ────────────────────────────────────────────────────────────────────────
      Init
