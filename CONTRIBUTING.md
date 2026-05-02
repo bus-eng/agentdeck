@@ -43,3 +43,4 @@ that you understand it will be licensed under AGPL-3.0-or-later.
 ## Code of Conduct
 
 All contributors must follow our [Code of Conduct](CODE_OF_CONDUCT.md).
+# Mejora de la comunidad
