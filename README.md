@@ -1,50 +1,62 @@
-# AgentDeck
+# AgentDeck — Centro de Mando Inteligente
 
-> **Private repo.** Diseño y código en desarrollo activo. No redistribuir ni usar como base sin autorización explícita del autor.
+![AgentDeck](agentdeck-main.png)
 
-AgentDeck es una aplicación web **local** (corre en una Mac) que se accede desde cualquier dispositivo de la misma red — iPhone, iPad, otra laptop — vía `http://agentdeck.local:8787` (o `http://127.0.0.1:8787`).
+AgentDeck es un centro de mando local para operar proyectos técnicos desde el celular. Combina gestión visual de proyectos (Decks), terminal remota controlada, chat contextual con IA y acciones guiadas.
 
-Su razón de ser: ser un **centro de control local de agentes IA** (Codex CLI, Claude Code, OpenClaw y otros) encima de una terminal real, con proyectos guardados, comandos por intención, logs sanitizados, specs SDD y gobierno sobre qué pueden y qué no pueden hacer los agentes dentro de una sesión.
+Corre en tu Mac y se accede desde cualquier dispositivo en la misma red (iPhone, iPad, laptop) vía navegador.
 
-**No** es cloud. **No** es Electron/Tauri. **No** se expone a internet. Solo LAN.
+## Stack
 
-## Estado actual
+- **Runtime**: Node.js >= 22
+- **Backend**: Fastify 5 + WebSocket + node-pty
+- **DB**: SQLite (better-sqlite3 + Drizzle ORM)
+- **Frontend**: HTML/CSS/JS estático (Tailwind v4 CDN), xterm.js
+- **Red**: mDNS local (`agentdeck.local`), solo LAN
 
-- `PLAN.md` — superplan técnico y funcional (35 secciones + estrategia de licencias).
-- `agentdeck/` — spike ejecutable: Fastify + WebSocket + `@lydell/node-pty` + chat UI mobile-first. Sirve para validar el flujo end-to-end desde Safari iPhone contra un shell real en la Mac, antes de construir el v1 real con monorepo completo.
-
-## Cómo correr el spike
-
-Requisitos: Node ≥22, npm (o pnpm), macOS.
+## Quick start
 
 ```bash
-cd agentdeck
-npm install
-npm run dev
+git clone <repo> && cd agentdeck/agentdeck
+npm install && npm run setup && npm run start
+# → http://127.0.0.1:8787
 ```
 
-Al arrancar el server imprime tres URLs:
+## Estructura
 
 ```
-[ad] Local:  http://127.0.0.1:8787
-[ad] LAN:    http://192.168.x.x:8787
-[ad] mDNS:   http://agentdeck.local:8787  ← open this on iPhone/iPad/Mac
+agentdeck/
+  server.ts          — servidor Fastify + WebSocket + rutas
+  public/            — frontend estático (login, settings, index)
+  src/
+    db/              — Drizzle schema + SQLite
+    deck.ts          — Deck model, health score, checkpoints
+    routes/          — API routes (projects, etc.)
+    fs-browse.ts     — navegación filesystem con jail
+    guardrails.ts    — clasificador de riesgo de comandos
+  scripts/           — setup, doctor, update, reset, service install
+  data/              — base de datos local (no versionada)
 ```
 
-Passphrase por defecto: `agentdeck-dummy` (editable en `dummy/.env`, ver `.env.example`).
+## Comandos principales
 
-El usuario en el login es informativo; iCloud Keychain lo asocia a la contraseña para autocompletar en siguientes accesos.
+| Comando | Descripción |
+|---|---|
+| `npm run dev` | Desarrollo con hot reload |
+| `npm run start` | Producción |
+| `npm run doctor` | Diagnosticar entorno |
+| `npm run setup` | Setup completo + workspace |
+| `npm run update` | Post-git-pull (deps + doctor) |
+| `npm run reset-local` | Reparar configuración local |
+| `npm run rebuild` | Recompilar node-pty nativo |
 
-## Licencia
+## Seguridad
 
-Repo **privado**. No se ha asignado licencia todavía — el uso, copia o redistribución requieren autorización explícita del autor.
-
-Plan a futuro (cuando se cumplan los prerequisitos legales del autor): abrir el proyecto bajo **Apache-2.0** con SPDX identifiers en cada archivo fuente.
-
-## Contribuciones
-
-Mientras el repo sea privado, **no se aceptan contribuciones externas**. Issues y PRs quedarán cerrados sin evaluar.
-
----
+- Puerto 8787, host `127.0.0.1` por defecto
+- Autenticación por passphrase + cookie de sesión
+- API keys en `~/.agentdeck/providers/` (local, no compartidas)
+- Workspace sincronizable via iCloud (opcional)
+- Rate limiting en WebSocket (60 msg/s por socket)
+- Path sanitizado en navegación filesystem (jail al home)
 
 © 2026 Roberto Bustamante. Todos los derechos reservados.
