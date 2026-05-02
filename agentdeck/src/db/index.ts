@@ -10,10 +10,15 @@ const __dirname = dirname(__filename);
 const dbPath = join(__dirname, "../../data/agentdeck.db");
 
 // Ensure data directory exists
-mkdirSync(join(__dirname, "../../data"), { recursive: true });
+try {
+  mkdirSync(join(__dirname, "../../data"), { recursive: true });
+} catch {
+  throw new Error(`Cannot create data directory at ${join(__dirname, "../../data")}`);
+}
 
 const sqlite = new Database(dbPath);
 sqlite.pragma("journal_mode = WAL");
+sqlite.pragma("foreign_keys = ON");
 
 export const db = drizzle(sqlite, { schema });
 export { schema };

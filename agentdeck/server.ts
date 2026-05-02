@@ -10,7 +10,8 @@ import { readFileSync, writeFileSync, existsSync, statSync, mkdirSync } from "no
 import os from "node:os";
 import { resolveBrowsePath, browseDirectory } from "./src/fs-browse.js";
 import { db, schema } from "./src/db/index.js";
-import { eq, and, like, sql, desc } from "drizzle-orm";
+import { eq, and, sql, desc } from "drizzle-orm";
+import { projectRoutes } from "./src/routes/projects.js";
 import mdnsFactory from "multicast-dns";
 
 let nodePty: typeof import("@lydell/node-pty");
@@ -267,12 +268,21 @@ await app.register(fastifyMultipart, { limits: { fileSize: 10 * 1024 * 1024, fil
 await app.register(fastifyStatic, { root: join(__dirname, "public"), serve: true, index: false, wildcard: false });
 await app.register(fastifyWebSocket);
 
+app.decorate("sessions", sessions);
+
+await app.register(projectRoutes);
+
 app.addContentTypeParser("application/x-www-form-urlencoded", { parseAs: "string" }, (_req, body, done) => {
   try {
+    if (typeof body !== "string") { done(null, {}); return; }
     const parsed: Record<string, string> = {};
-    for (const pair of (body as string).split("&")) {
-      const [k, v] = pair.split("=").map(decodeURIComponent);
-      if (k) parsed[k] = v ?? "";
+    for (const pair of body.split("&")) {
+      if (!pair) continue;
+      const idx = pair.indexOf("=");
+      if (idx === -1) { parsed[decodeURIComponent(pair)] = ""; continue; }
+      const k = decodeURIComponent(pair.slice(0, idx));
+      const v = decodeURIComponent(pair.slice(idx + 1));
+      if (k) parsed[k] = v;
     }
     done(null, parsed);
   } catch (err) { done(err as Error, undefined); }
@@ -319,7 +329,7 @@ app.post("/login", { config: { rawBody: false } }, async (req, reply) => {
     .setCookie("ad_session", token, {
       path: "/", httpOnly: true, sameSite: "lax",
       maxAge: SESSION_TTL_MS / 1000,
-      secure: false,
+      secure: !ALLOW_LAN,
     })
     .redirect("/");
 });
@@ -360,7 +370,10 @@ app.get("/ws/terminal", { websocket: true }, (socket, req) => {
   console.log(hadPty ? "[ad] WS opened — reattaching PTY" : "[ad] WS opened — spawning PTY");
   attachPtyToSocket(sess, socket as unknown as import("ws").WebSocket, seenChars);
 
+  let msgCount = 0;
+  const msgReset = setInterval(() => { msgCount = 0; }, 1000).unref();
   socket.on("message", (raw: import("ws").RawData) => {
+    if (++msgCount > 60) { socket.close(4409, "rate limited"); return; }
     let msg: { t?: string; d?: string };
     try { msg = JSON.parse(raw.toString()); } catch { return; }
     if (msg.t === "in" && msg.d) {
@@ -370,10 +383,9 @@ app.get("/ws/terminal", { websocket: true }, (socket, req) => {
       if (p?.cols && p?.rows) {
         try { sess.pty?.resize(p.cols, p.rows); } catch { }
       }
-    } else if (msg.t === "in" && msg.d === "\x03") {
-      try { sess.pty?.write("\x03"); } catch { }
     }
   });
+  socket.on("close", () => clearInterval(msgReset));
 
   socket.on("close", () => {
     if (sess.ws !== socket) return;
@@ -429,8 +441,7 @@ app.post("/projects/:id/open", async (req, reply) => {
   const token = req.cookies.ad_session;
   const sess = sessions.get(token!);
   if (sess?.pty) {
-    const quoted = proj.path.replace(/([ !$&'()*+,;<=>?[\]^`{|}~])/g, "\\$1");
-    sess.pty.write(`cd ${quoted}\r`);
+    sess.pty.write(`cd "${proj.path.replace(/"/g, '\\"')}"\r`);
   }
   if (deckLib?.ensureDeckForProject) {
     const d = deckLib.ensureDeckForProject(proj);
@@ -446,7 +457,7 @@ app.delete("/projects/:id", async (req, reply) => {
   if (idx === -1) return reply.status(404).send({ ok: false });
   projectsDB.splice(idx, 1);
   persistProjects();
-  db.delete(schema.decks).where(sql`decks.project_id = ${id}`).run();
+  db.delete(schema.decks).where(eq(schema.decks.projectId, id)).run();
   return reply.send({ ok: true });
 });
 
@@ -515,7 +526,7 @@ app.get("/api/history/suggest", async (req, reply) => {
   const limit = Math.min(Number(query.limit ?? 8), 20);
   const rows = db.all(sql`
     SELECT text, kind, use_count FROM command_history
-    WHERE user_id = ${userId} AND text LIKE ${q + "%"} ESCAPE '\\'
+    WHERE user_id = ${userId} AND text LIKE ${q.replace(/[%_]/g, "\\$&") + "%"} ESCAPE '\\'
     ORDER BY use_count DESC, last_used_at DESC LIMIT ${limit}
   `) as Array<{ text: string; kind: string; use_count: number }>;
   return reply.send({ items: rows });
@@ -809,8 +820,14 @@ app.post("/api/upload", async (req, reply) => {
   const ext = extname(data.filename);
   const filename = `${randomUUID()}${ext}`;
   const filePath = join(UPLOADS_DIR, filename);
+  const { pipeline } = await import("node:stream/promises");
   const writeStream = require("node:fs").createWriteStream(filePath);
-  await data.file.pipe(writeStream);
+  try {
+    await pipeline(data.file, writeStream);
+  } catch (err) {
+    try { writeStream.destroy(); require("node:fs").unlinkSync(filePath); } catch { }
+    return reply.status(500).send({ ok: false, error: "upload failed" });
+  }
   return reply.send({ ok: true, filename, originalName: data.filename, size: 0 });
 });
 

@@ -1,10 +1,25 @@
-import { FastifyInstance } from "fastify";
+import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { db } from "../db/index.js";
 import { projects } from "../db/schema.js";
 import { eq, desc } from "drizzle-orm";
 import { existsSync } from "node:fs";
 
+const AUTH_ROUTES = new Set(["/api/projects", "/api/projects/"]);
+
 export async function projectRoutes(fastify: FastifyInstance) {
+  fastify.addHook("onRequest", async (req: FastifyRequest, reply: FastifyReply) => {
+    const path = req.url.split("?")[0];
+    if (!AUTH_ROUTES.has(path) && !path.startsWith("/api/projects/")) return;
+
+    if (!req.cookies.ad_session) {
+      return reply.status(401).send({ ok: false, error: "unauthorized" });
+    }
+    const sessions = (fastify as any).sessions;
+    if (!sessions?.has(req.cookies.ad_session)) {
+      return reply.status(401).send({ ok: false, error: "unauthorized" });
+    }
+  });
+
   fastify.get("/api/projects", async () => {
     const all = await db.select().from(projects).orderBy(desc(projects.updatedAt));
     return all;
