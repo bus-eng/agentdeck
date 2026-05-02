@@ -16,8 +16,8 @@ The Community Edition of AgentDeck is licensed under the
 
 - The **name "AgentDeck"**, logo, icons, visual identity, and branding.
   See [TRADEMARKS.md](../TRADEMARKS.md) for details.
-- **Future commercial modules** (Pro, Cloud, Enterprise) that may be
-  developed under a separate license in a private repository.
+- **Future commercial modules** that may be developed under a separate
+  license in a private repository.
 - **Third-party dependencies** included via package managers — those
   are governed by their own licenses.
 
@@ -33,8 +33,7 @@ users. This is the core "network copyleft" requirement of the AGPL.
 To maintain a clear boundary:
 
 - All Community code lives in this public repository under AGPL.
-- Any future commercial modules (Pro features, Cloud integration,
-  Enterprise deployment tooling) will reside in a **separate private
+- Any future commercial modules will reside in a **separate private
   repository** under a commercial license.
 - Commercial modules may interact with the Community Edition through
   well-defined extension points, but the Community code remains
