@@ -11,14 +11,14 @@ Su razón de ser: ser un **centro de control local de agentes IA** (Codex CLI, C
 ## Estado actual
 
 - `PLAN.md` — superplan técnico y funcional (35 secciones + estrategia de licencias).
-- `dummy/` — spike ejecutable: Fastify + WebSocket + `@lydell/node-pty` + chat UI mobile-first. Sirve para validar el flujo end-to-end desde Safari iPhone contra un shell real en la Mac, antes de construir el v1 real con monorepo completo.
+- `agentdeck/` — spike ejecutable: Fastify + WebSocket + `@lydell/node-pty` + chat UI mobile-first. Sirve para validar el flujo end-to-end desde Safari iPhone contra un shell real en la Mac, antes de construir el v1 real con monorepo completo.
 
 ## Cómo correr el spike
 
 Requisitos: Node ≥22, npm (o pnpm), macOS.
 
 ```bash
-cd dummy
+cd agentdeck
 npm install
 npm run dev
 ```

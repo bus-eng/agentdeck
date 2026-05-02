@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.agentdeck</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/opt/homebrew/bin/node</string>
+        <string>/Users/robertobustamante/Library/Mobile Documents/com~apple~CloudDocs/1-EnCurso/Programacion/code/agentdeck/agentdeck/dist/server.js</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/robertobustamante/Library/Mobile Documents/com~apple~CloudDocs/1-EnCurso/Programacion/code/agentdeck/agentdeck</string>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/Users/robertobustamante/Library/Logs/agentdeck.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/robertobustamante/Library/Logs/agentdeck.error.log</string>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
+</dict>
+</plist>
