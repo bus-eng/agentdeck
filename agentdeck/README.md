@@ -207,3 +207,24 @@ npm run rebuild
 - **Terminal**: node-pty + xterm.js
 - **Base de datos**: SQLite (better-sqlite3 + Drizzle ORM)
 - **Frontend**: HTML/CSS/JS estático servido desde public/
+
+---
+
+## Licencia
+
+**AgentDeck Community Edition** se distribuye bajo
+**GNU Affero General Public License v3 o posterior**
+(AGPL-3.0-or-later).
+
+Eso significa que podés usar, estudiar, modificar y distribuir el
+software, pero **si ofrecés una versión modificada como servicio a
+usuarios por red, debés poner a disposición el código fuente
+correspondiente** bajo la misma licencia.
+
+> El nombre "AgentDeck", el logo y la identidad visual **no** están
+> cubiertos por AGPL. Consultá [TRADEMARKS.md](../TRADEMARKS.md) para
+> la política de marca.
+
+Podrían existir licencias comerciales futuras para uso enterprise,
+hosting o propietario. Consultá [docs/licensing.md](../docs/licensing.md)
+para entender la separación entre Community y módulos comerciales.

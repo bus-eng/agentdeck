@@ -1,7 +1,9 @@
 {
   "name": "agentdeck",
   "version": "0.1.0",
-  "description": "Spike: xterm.js + WebSocket + node-pty proof of concept",
+  "description": "AgentDeck — Centro de Mando Inteligente para proyectos técnicos",
+  "license": "AGPL-3.0-or-later",
+  "author": "Roberto Bustamante (virela-dev)",
   "type": "module",
   "engines": {
     "node": ">=22"

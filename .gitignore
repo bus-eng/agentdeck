@@ -2,17 +2,34 @@
 node_modules/
 dist/
 build/
+coverage/
+.turbo/
+.next/
+.vite/
+.cache/
 
 # Runtime / local state (contain tokens or user data — never commit)
 **/sessions.json
 **/projects.json
 **/.env
 **/.env.local
+!.env.example
+
+# Logs
+*.log
+logs/
+tmp/
+
+# Certificates and keys
+*.pem
+*.key
+*.p12
+*.pfx
 
 # Local tooling / editor
 .DS_Store
-*.log
 .vscode/
+.vscode/settings.json
 .idea/
 
 # Claude / AI tooling — local permissions only
@@ -20,4 +37,9 @@ build/
 
 # OS
 Thumbs.db
+
+# Local data directory (created at runtime)
+agentdeck/data/
+
+# Playwright MCP artifacts
 .playwright-mcp/

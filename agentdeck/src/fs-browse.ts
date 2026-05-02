@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Roberto Bustamante (virela-dev)
+
 import { readdir, stat, lstat } from "node:fs/promises";
 import { resolve, join, dirname, basename } from "node:path";
 import os from "node:os";

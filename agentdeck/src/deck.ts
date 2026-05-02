@@ -3,6 +3,9 @@ import { homedir } from "node:os";
 import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import { sql, eq, desc } from "drizzle-orm";
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Roberto Bustamante (virela-dev)
+
 import { db, schema } from "./db/index.js";
 
 const WORKSPACE_DIRS = ["Decks", "Recipes", "Prompts", "Checkpoints", "Settings", "Exports"];
